@@ -1,22 +1,110 @@
 import chisel3._
-import chisel3.experimental._
 import chisel3.util._
 
-trait ControlParam { }
+trait ControlParam {
+  val stateBits = 6
+}
 
-class Controller extends ControlParam {
+class ctrlSigRom extends Module with ControlParam{
   val io = IO(new Bundle{
-    val sig = Input(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
-    val int = Input(Bool())         // high priority device request
-    val r   = Input(Bool())         // ready: memory operations is finished
-    val ir  = Input(UInt(5.W))      // opcode
-    val ben = Input(Bool())         // br can be executed
-    val psr = Input(Bool())         // privilege: supervisor or user
-    val out = Output(UInt(49.W))    // output control signal: out[48:39]:next input control signal   out[38:0]: to datapath
+    val sel = Input(UInt(stateBits.W))
+    val out = Output(UInt(39.W))
   })
 
-  val (sig, int, r, ir, ben, psr, out) = (io.sig, io.int, io.r, io.ir, io.ben, io.psr, io.out)
-  val state = RegInit(18.U(6.W))
+  val ROM = VecInit(
+    "b000000000000000000000000000000000000000".U,
+    "b000011000000010000000000100000000000000".U,
+    "b100000000000001000000000001000100000000".U,
+    "b100000000000001000000000001000100000000".U,
+    "b000010000001000000000010000000000000000".U,
+    "b000011000000010000000000100000000001000".U,
+    "b100000000000001000000000110100100000000".U,
+    "b100000000000001000000000110100100000000".U,
+    "b100000000000010000000001000000000011000".U,
+    "b000011000000010000000000100000000010000".U,
+    "b100000000000001000000000001000100000000".U,
+    "b100000000000001000000000001000100000000".U,
+    "b000000100000000000010000110000000000000".U,
+    "b010000010010000001000000000000010000000".U,
+    "b000011000000001000000000001000100000000".U,
+    "b100000000000001000000000000000000000000".U,
+    "b000000000000000000000000000000000000110".U,
+    "b000000000000000000000000000000000000000".U,
+    "b100000100001000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000010100001000000010010110000000000000".U,
+    "b000000100000000000010000001100000000000".U,
+    "b000000100000000000010000001000000000000".U,
+    "b010000000000010000000000000000000011000".U,
+    "b010000000000000000000000000000000000100".U,
+    "b010000000000000000000000000000000000100".U,
+    "b100000000000100000000000000000000000000".U,
+    "b000011000000100000000000000000000000000".U,
+    "b010010000001000000000010000000000000100".U,
+    "b010000000000000000000000000000000000100".U,
+    "b000000100000100000001000000000000000000".U,
+    "b100000000000100000000000000000000000000".U,
+    "b000100000000000000000000000000000000000".U,
+    "b010000000000000000000000000000000000100".U,
+    "b000010000000000000100101000000000000000".U,
+    "b001000000000100000000000000000000000000".U,
+    "b010000000000000000000000000000000000100".U,
+    "b100010000000000000100101000001000000000".U,
+    "b000000100000100000001000000000000000000".U,
+    "b100010000000000000100101000000000000000".U,
+    "b010000000000000000000000000000000000100".U,
+    "b000000000000000000000000000000000100110".U,
+    "b000001010000100000000000000000000000000".U,
+    "b010000000000000010000000000000000000000".U,
+    "b010000010010000001000000000000001000000".U,
+    "b000010000100000000100101000010000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b100010000000000000100101000010000000000".U,
+    "b000000000000000000000000000000000000110".U,
+    "b010000010010000001000000000000000000000".U,
+    "b100000000000000100000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b010000000000000000000000000000000000100".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000100000100000001000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000010001000000000100101000011000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U,
+    "b000000000000000000000000000000000000000".U
+  )
+
+  io.out := ROM(io.sel)
+}
+
+object ctrlSigRom {
+  def apply(sel: UInt): UInt = {
+    val rom = new ctrlSigRom
+    rom.io.sel := sel
+    rom.io.out
+  }
+}
+
+class Controller extends Module with ControlParam {
+  val io = IO(new Bundle{
+    val in  = new Bundle {
+      val sig = Input(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
+      val int = Input(Bool())         // high priority device request
+      val r   = Input(Bool())         // ready: memory operations is finished
+      val ir  = Input(UInt(16.W))     // opcode
+      val ben = Input(Bool())         // br can be executed
+      val psr = Input(Bool())         // privilege: supervisor or user
+    }
+    val out = Output(UInt(39.W))     // output control signal
+  })
+
+  val (sig, int, r, ir, ben, psr, out) = (io.in.sig, io.in.int, io.in.r, io.in.ir, io.in.ben, io.in.psr, io.out)
+  val state = RegInit(18.U(stateBits.W))
+  out := ctrlSigRom(state)
 
   switch (state) {
     is (0.U) { state := Mux(ben, 22.U, 18.U) }
@@ -36,9 +124,9 @@ class Controller extends ControlParam {
     is (14.U) { state := 18.U }
     is (15.U) { state := 28.U }
     is (16.U) { state := Mux(r, 18.U, 16.U)}
-    is (17.U) { state := }
+    //is (17.U) { state := }
     is (18.U) { state := Mux(int, 49.U, 33.U) }
-    is (19.U) { state := }
+    //is (19.U) { state := }
     is (20.U) { state := 18.U }
     is (21.U) { state := 18.U }
     is (22.U) { state := 18.U }
@@ -51,7 +139,7 @@ class Controller extends ControlParam {
     is (29.U) { state := Mux(r, 31.U, 29.U) }
     is (30.U) { state := 18.U }
     is (31.U) { state := 23.U }
-    is (32.U) { state := Cat(0.U(2.W), ir)}
+    is (32.U) { state := ir(15,12) }
     is (33.U) { state := Mux(r, 35.U, 33.U)}
     is (34.U) { state := Mux(psr(4), 59.U, 51.U) }
     is (35.U) { state := 32.U }
@@ -68,8 +156,9 @@ class Controller extends ControlParam {
     is (47.U) { state := 48.U }
     is (48.U) { state := Mux(r, 50.U, 48.U) }
     is (49.U) { state := Mux(psr, 45.U, 37.U) }
-    is (50.U) { state := Mux(r, 54.U, 52.U) }
+    is (50.U) { state := 52.U }
     is (51.U) { state := 18.U }
+    is (52.U) { state := Mux(r, 54.U, 52.U) }
     is (54.U) { state := 18.U}
     is (59.U) { state := 18.U }
   }
