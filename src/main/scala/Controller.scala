@@ -5,13 +5,48 @@ trait ControlParam {
   val stateBits = 6
 }
 
+class signalEntry extends Bundle {
+  val LD_MAR      = Bool()
+  val LD_MDR      = Bool()
+  val LD_IR       = Bool()
+  val LD_BEN      = Bool()
+  val LD_REG      = Bool()
+  val LD_CC       = Bool()
+  val LD_PC       = Bool()
+  val LD_PRIV     = Bool()
+  val LD_SAVEDSSP = Bool()
+  val LD_SAVEDUSP = Bool()
+  val LD_VECTOR   = Bool()
+  val GATE_PC     = Bool()
+  val GATE_MDR    = Bool()
+  val GATE_ALU    = Bool()
+  val GATE_MARMUX = Bool()
+  val GATE_VECTOR = Bool()
+  val GATE_PC1    = Bool()
+  val GATE_PSR    = Bool()
+  val GATE_SP     = Bool()
+  val PC_MUX      = UInt(2.W)
+  val DR_MUX      = UInt(2.W)
+  val SR1_MUX     = UInt(2.W)
+  val ADDR1_MUX   = Bool()
+  val ADDR2_MUX   = UInt(2.W)
+  val SP_MUX      = UInt(2.W)
+  val MAR_MUX     = Bool()
+  val VECTOR_MUX  = UInt(2.W)
+  val PSR_MUX     = Bool()
+  val ALUK        = UInt(2.W)
+  val MIO_EN      = Bool()
+  val R_W         = Bool()
+  val SET_PRIV    = Bool()
+}
+
 class ctrlSigRom extends Module with ControlParam{
   val io = IO(new Bundle{
     val sel = Input(UInt(stateBits.W))
-    val out = Output(UInt(39.W))
+    val out = Output(new signalEntry)
   })
 
-  val ROM = VecInit(
+  val signalTable = VecInit(
     "b000000000000000000000000000000000000000".U,
     "b000011000000010000000000100000000000000".U,
     "b100000000000001000000000001000100000000".U,
@@ -78,14 +113,14 @@ class ctrlSigRom extends Module with ControlParam{
     "b000000000000000000000000000000000000000".U
   )
 
-  io.out := ROM(io.sel)
+  io.out := signalTable(io.sel).asTypeOf(new signalEntry)
 }
 
 object ctrlSigRom {
-  def apply(sel: UInt): UInt = {
-    val rom = new ctrlSigRom
-    rom.io.sel := sel
-    rom.io.out
+  def apply(sel: UInt): signalEntry = {
+    val ctrlSig = new ctrlSigRom
+    ctrlSig.io.sel := sel
+    ctrlSig.io.out
   }
 }
 
@@ -99,7 +134,7 @@ class Controller extends Module with ControlParam {
       val ben = Input(Bool())         // br can be executed
       val psr = Input(Bool())         // privilege: supervisor or user
     }
-    val out = Output(UInt(39.W))     // output control signal
+    val out = Output(new signalEntry)     // output control signal
   })
 
   val (sig, int, r, ir, ben, psr, out) = (io.in.sig, io.in.int, io.in.r, io.in.ir, io.in.ben, io.in.psr, io.out)
@@ -124,7 +159,7 @@ class Controller extends Module with ControlParam {
     is (14.U) { state := 18.U }
     is (15.U) { state := 28.U }
     is (16.U) { state := Mux(r, 18.U, 16.U)}
-    //is (17.U) { state := }
+    //is (17.U) { state := }??
     is (18.U) { state := Mux(int, 49.U, 33.U) }
     //is (19.U) { state := }
     is (20.U) { state := 18.U }
