@@ -125,12 +125,12 @@ class DataPath extends Module {
 
   when(SIG.LD_REG) {
     regfile.io.wen := true.B
-    regfile.io.waddr := dst
-    when(SIG.GATE_PC)     { regfile.io.waddr := R7; regfile.io.wdata := PC }
+    regfile.io.waddr := DRMUX
+    when(SIG.GATE_PC)     { regfile.io.wdata := PC }
     when(SIG.GATE_MDR)    { regfile.io.wdata := MDR }   //27
     when(SIG.GATE_ALU)    { regfile.io.wdata := alu.io.out }
     when(SIG.GATE_MARMUX) { regfile.io.wdata := MARMUX }   //14
-    //when(SIG.GATE_SP)     { regfile.io.waddr := SP; regfile.io.wdata := SPMUX }
+    when(SIG.GATE_SP)     { regfile.io.wdata := SPMUX }
   }
 
   when(SIG.LD_CC) {
