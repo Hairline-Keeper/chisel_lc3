@@ -17,10 +17,6 @@ class DataPath extends Module {
   val R7 = 7.U(3.W)
 
 
-
-
-
-
   val SIG = io.signal
 
   val BEN = RegInit(false.B)
@@ -30,66 +26,93 @@ class DataPath extends Module {
 
 
 
-  val PC  = RegNext(pcMux, 0.U(16.W))
+  val PC  = RegInit(0.U(16.W))
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
+  val PSR = RegInit(0.U(16.W))
+
+
+  val dstData = Wire(regfile.io.wdata)
 
   /*********** IR Decode ****************/
   val baseR = IR(8,6)
-  val src2 = IR(2,0)
+  val src2  = IR(2,0)
   val isImm = IR(5)
+  val dst   = IR(11,9)
 
   //offset
   val offset5  = SignExt(IR(4,0), 5)  //imm
   val offset6  = SignExt(IR(5,0), 6)
-  val offset8  = ZeroExt(IR(7,0), 8)  //int vec
   val offset9  = SignExt(IR(8,0), 9)
   val offset11 = SignExt(IR(10,0), 11)
+  val offset8  = ZeroExt(IR(7,0), 8)  //int vec
 
   /*********** Datapath ****************/
-  val pcMux = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
+
+  /*******
+  *  Mux
+  ********/
+  val PCMUX = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
     0.U -> (PC + 1.U),
     1.U -> baseR,
     2.U -> addrOut
   ))
-  val addr1Mux = Mux(SIG.ADDR1_MUX, baseR, PC)
-  val addr2Mux = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
+
+  val DRMUX = MuxLookup(SIG.DR_MUX, IR(11,9), Seq(
+    0.U -> IR(11,9),
+    1.U -> R7,
+    2.U -> SP
+  ))
+
+  val SR1MUX = MuxLookup(SIG.SR1_MUX, IR(11,9), Seq(
+    0.U -> IR(11,9),
+    1.U -> IR(8,6),
+    2.U -> SP
+  ))
+
+  val ADDR1MUX = Mux(SIG.ADDR1_MUX, baseR, PC)
+
+  val ADDR2MUX = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
     0.U -> 0.U,
     1.U -> offset6,
     2.U -> offset9,
     3.U -> offset11
   ))
-  val addrOut = addr1Mux + addr2Mux
-  val marMux = Mux(SIG.MAR_MUX, addrOut, offset8)
 
-  val dstMux = MuxLookup(SIG.DR_MUX, IR(11,9), Seq(
-    0.U -> IR(11,9),
-    1.U -> R7,
-    2.U -> SP
-  ))
-  val src1Mux = MuxLookup(SIG.SR1_MUX, IR(11,9), Seq(
-    0.U -> IR(11,9),
-    1.U -> IR(8,6),
-    2.U -> SP
-  ))
+  //val SPMUX
+
+  val MARMUX = Mux(SIG.MAR_MUX, addrOut, offset8)
+  
+  //val VectorMUX
+
+  //val PSRMUX
+
+
+
+  //other mux
+
+  val addrOut = addr1Mux + addr2Mux
   val src2Mux = Mux(isImm, offset5, src2)
 
-
-
-  //LD
+  /*******
+  *  LD
+  ********/
 
   when(SIG.LD_MAR) {
-    when(SIG.GATE_ALU) { MAR := alu.io.out }
-    when(SIG.GATE_SP) { MAR :=  }
-    when(SIG.GATE_MARMUX) { MAR := marMux }
-    when(SIG.GATE_PC) { MAR := PC }
-    when(SIG.GATE_MDR) { MAR := MDR }
-    when(SIG.GATE_VECTOR) { MAR := Cat(1.U(8.W), offset8) }
+    when(SIG.GATE_PC)     { MAR := PC }
+    when(SIG.GATE_MDR)    { MAR := MDR }
+    when(SIG.GATE_ALU)    { MAR := alu.io.out }
+    when(SIG.GATE_MARMUX) { MAR := MARMUX }
+    when(SIG.GATE_VECTOR) { MAR := Cat(1.U(8.W), offset8) }   //50
+    //when(SIG.GATE_SP)     { MAR :=  SPMUX }                   //37 39 47 59
   }
 
   when(SIG.LD_MDR) {
-
+    when(SIG.GATE_ALU)  { MDR := alu.io.out }  //23
+    when(SIG.GATE_PC1)  { MDR := PC - 1 }
+    when(SIG.GATE_PSR)  { MDR := PSR }
+    //when(SIG.MIO_EN)    { MDR := MEMORY.IO. } //要先写memory
   }
 
   when(SIG.LD_IR) {
@@ -101,21 +124,29 @@ class DataPath extends Module {
   }
 
   when(SIG.LD_REG) {
-
+    regfile.io.wen := true.B
+    regfile.io.waddr := dst
+    when(SIG.GATE_PC)     { regfile.io.waddr := R7; regfile.io.wdata := PC }
+    when(SIG.GATE_MDR)    { regfile.io.wdata := MDR }   //27
+    when(SIG.GATE_ALU)    { regfile.io.wdata := alu.io.out }
+    when(SIG.GATE_MARMUX) { regfile.io.wdata := MARMUX }   //14
+    //when(SIG.GATE_SP)     { regfile.io.waddr := SP; regfile.io.wdata := SPMUX }
   }
 
-  val dstData = Wire(UInt(16.W))
   when(SIG.LD_CC) {
-    when(SIG.GATE_ALU) { dstData := alu.io.out }
-    when(SIG.GATE_MDR) { dstData := MDR }
     N := dstData(15)
     Z := !dstData.orR()
     P := !dstData(15) && dstData.orR()
   }
 
   when(SIG.LD_PC) {
+    PC := PCMUX
     when(SIG.GATE_MDR) { PC := MDR }
-    PC := pcMux    // GATE_ALU
   }
+//
+//
+//
+//
+
 
 }
