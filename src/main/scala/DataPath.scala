@@ -10,9 +10,6 @@ class DataPath extends Module {
   val regfile = new Regfile
   val alu = new ALU
 
-
-
-
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
 
@@ -33,7 +30,7 @@ class DataPath extends Module {
   val PSR = RegInit(0.U(16.W))
 
 
-  val dstData = Wire(regfile.io.wdata)
+  val dstData = Wire(regfile.io.wData)
 
   /*********** IR Decode ****************/
   val baseR = IR(8,6)
@@ -92,7 +89,7 @@ class DataPath extends Module {
 
   //other mux
 
-  val addrOut = addr1Mux + addr2Mux
+  val addrOut = ADDR1MUX + ADDR2MUX
   val src2Mux = Mux(isImm, offset5, src2)
 
   /*******
@@ -110,7 +107,7 @@ class DataPath extends Module {
 
   when(SIG.LD_MDR) {
     when(SIG.GATE_ALU)  { MDR := alu.io.out }  //23
-    when(SIG.GATE_PC1)  { MDR := PC - 1 }
+    when(SIG.GATE_PC1)  { MDR := PC - 1.U }
     when(SIG.GATE_PSR)  { MDR := PSR }
     //when(SIG.MIO_EN)    { MDR := MEMORY.IO. } //要先写memory
   }
@@ -125,12 +122,12 @@ class DataPath extends Module {
 
   when(SIG.LD_REG) {
     regfile.io.wen := true.B
-    regfile.io.waddr := DRMUX
-    when(SIG.GATE_PC)     { regfile.io.wdata := PC }
-    when(SIG.GATE_MDR)    { regfile.io.wdata := MDR }   //27
-    when(SIG.GATE_ALU)    { regfile.io.wdata := alu.io.out }
-    when(SIG.GATE_MARMUX) { regfile.io.wdata := MARMUX }   //14
-    when(SIG.GATE_SP)     { regfile.io.wdata := SPMUX }
+    regfile.io.wAddr := DRMUX
+    when(SIG.GATE_PC)     { regfile.io.wAddr := PC }
+    when(SIG.GATE_MDR)    { regfile.io.wAddr := MDR }   //27
+    when(SIG.GATE_ALU)    { regfile.io.wAddr := alu.io.out }
+    when(SIG.GATE_MARMUX) { regfile.io.wAddr := MARMUX }   //14
+    when(SIG.GATE_SP)     { regfile.io.wAddr := SPMUX }
   }
 
   when(SIG.LD_CC) {
