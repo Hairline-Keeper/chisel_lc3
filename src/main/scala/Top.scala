@@ -1,4 +1,0 @@
-
-class Top {
-  val io =
-}

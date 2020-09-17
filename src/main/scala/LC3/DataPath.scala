@@ -1,3 +1,4 @@
+package LC3
 
 import chisel3._
 import chisel3.util._
@@ -127,7 +128,7 @@ class DataPath extends Module {
     when(SIG.GATE_MDR)    { regfile.io.wAddr := MDR }   //27
     when(SIG.GATE_ALU)    { regfile.io.wAddr := alu.io.out }
     when(SIG.GATE_MARMUX) { regfile.io.wAddr := MARMUX }   //14
-    when(SIG.GATE_SP)     { regfile.io.wAddr := SPMUX }
+    //when(SIG.GATE_SP)     { regfile.io.wAddr := SPMUX }
   }
 
   when(SIG.LD_CC) {
