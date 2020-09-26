@@ -1,7 +1,7 @@
 package LC3
 
 import chisel3._
-import chisel3.tester._
+import chiseltest._
 import org.scalatest._
 
 import scala.util.Random
@@ -29,27 +29,37 @@ class ALUtest extends FlatSpec
 
   it should "test add" in {
     test(new ALU) { c =>
-      println(s"\n*******test add********\n")
-      for
-      c.io.ina.poke()
+      // println(s"\n*******test add********\n")
+      // for
+      // c.io.ina.poke()
+      printf("This is test add\n")
     }
   }
 
   it should "test and" in {
     test(new ALU) { c =>
       // test body here
+      printf("This is test and\n")
     }
   }
 
   it should "test not" in {
     test(new ALU) { c =>
       // test body here
+      printf("This is test not\n")
     }
   }
 
   it should "test pass" in {
     test(new ALU) { c =>
       // test body here
+      printf("This is test pass\n")
     }
   }
 }
+
+// object TestMain extends App {
+//   iotesters.Driver.execute(args, () => new ALU) {
+//     c => new ALUtest(c)
+//   }
+// }

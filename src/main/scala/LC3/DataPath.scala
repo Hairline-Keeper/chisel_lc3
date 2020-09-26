@@ -6,6 +6,7 @@ import chisel3.util._
 class DataPath extends Module {
   val io = IO(new Bundle{
     val signal = Input(new signalEntry)
+    val mem = Flipped(new MemIO)
   })
 
   val regfile = new Regfile

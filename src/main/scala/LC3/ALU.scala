@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.experimental._
 import chisel3.util._
 
-class ALU {
+class ALU extends Module{
   val io = IO(new Bundle{
     val ina = Input(UInt(16.W))
     val inb = Input(UInt(16.W))
