@@ -7,7 +7,7 @@ class FeedBack extends Bundle {
   val sig = Output(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
   val int = Output(Bool())         // high priority device request
   val r   = Output(Bool())         // ready: memory operations is finished
-  val ir  = Output(UInt(5.W))     // opcode
+  val ir  = Output(UInt(4.W))     // opcode
   val ben = Output(Bool())         // br can be executed
   val psr = Output(Bool())         // privilege: supervisor or user
 }
@@ -21,18 +21,26 @@ class DataPath extends Module {
 
   val SIG = io.signal
 
+  val bus = Module(new SimpleBus)
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
 
+  bus.io.GateSig := (io.signal)(27,20)
+  bus.io.Gatedata := DontCare // TODO: Connect Gate to Bus
+
   alu.io.ina := regfile.io.r1Data
   alu.io.inb := regfile.io.r2Data
-  alu.io.op := DontCare
-  regfile.io.wData := DontCare // TODO: What is RF input data?
-  regfile.io.r1Addr := DontCare
-  regfile.io.r2Addr := DontCare
-  io.mem.wen := SIG.MIO_EN
+  alu.io.op := io.sig.ALUK
+
+  regfile.io.wen := !io.sig.LD_REG
+  regfile.io.wAddr := DRMUX
+  regfile.io.r1Addr := SR1MUX
+  regfile.io.r2Addr := IR(2, 0)
+  regfile.io.wData := Mux(io.signal.LD_REG, bus.io.out, 0.U)
+
   io.mem.addr := DontCare
-  io.mem.wdata := DontCare
+  io.mem.wen := SIG.MIO_EN && !SIG.R_W
+  io.mem.wdata := Mux(io.signal.LD_MDR, bus.io.out, 0.U)
 
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
@@ -56,7 +64,7 @@ class DataPath extends Module {
   io.out.sig := DontCare
   io.out.int := false.B
   io.out.r := io.mem.R
-  io.out.ir := IR(15, 11)
+  io.out.ir := IR(15, 12)
   io.out.ben := BEN
   io.out.psr := PSR(15)
 
