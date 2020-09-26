@@ -14,6 +14,9 @@ class ALU extends Module{
   })
   val result = Wire(UInt(17.W))
 
+  io.out := DontCare
+  io.c := DontCare
+  result := DontCare
   switch (io.op) {
     is (0.U) {
       result := io.ina +& io.inb
