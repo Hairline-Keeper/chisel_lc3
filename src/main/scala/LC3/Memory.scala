@@ -19,4 +19,5 @@ class Memory extends Module {
     mem(io.addr) := io.wdata
   }
   io.rdata := mem(io.addr)
+  io.R := true.B
 }

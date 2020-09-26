@@ -3,20 +3,41 @@ package LC3
 import chisel3._
 import chisel3.util._
 
+class FeedBack extends Bundle {
+  val sig = Output(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
+  val int = Output(Bool())         // high priority device request
+  val r   = Output(Bool())         // ready: memory operations is finished
+  val ir  = Output(UInt(5.W))     // opcode
+  val ben = Output(Bool())         // br can be executed
+  val psr = Output(Bool())         // privilege: supervisor or user
+}
+
 class DataPath extends Module {
   val io = IO(new Bundle{
     val signal = Input(new signalEntry)
     val mem = Flipped(new MemIO)
+    val out = new FeedBack
   })
 
-  val regfile = new Regfile
-  val alu = new ALU
+  val SIG = io.signal
+
+  val regfile = Module(new Regfile)
+  val alu = Module(new ALU)
+
+  alu.io.ina := regfile.io.r1Data
+  alu.io.inb := regfile.io.r2Data
+  alu.io.op := DontCare
+  regfile.io.wData := DontCare // TODO: What is RF input data?
+  regfile.io.r1Addr := DontCare
+  regfile.io.r2Addr := DontCare
+  io.mem.wen := SIG.MIO_EN
+  io.mem.addr := DontCare
+  io.mem.wdata := DontCare
 
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
 
 
-  val SIG = io.signal
 
   val BEN = RegInit(false.B)
   val N = RegInit(false.B)
@@ -31,8 +52,16 @@ class DataPath extends Module {
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
 
+  
+  io.out.sig := DontCare
+  io.out.int := false.B
+  io.out.r := io.mem.R
+  io.out.ir := IR(15, 11)
+  io.out.ben := BEN
+  io.out.psr := PSR(15)
 
-  val dstData = Wire(regfile.io.wData)
+
+  val dstData = WireInit(regfile.io.wData)
 
   /*********** IR Decode ****************/
   val baseR = IR(8,6)
@@ -52,6 +81,19 @@ class DataPath extends Module {
   /*******
   *  Mux
   ********/
+  
+  val ADDR1MUX = Mux(SIG.ADDR1_MUX, baseR, PC)
+
+  val ADDR2MUX = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
+    0.U -> 0.U,
+    1.U -> offset6,
+    2.U -> offset9,
+    3.U -> offset11
+  ))
+
+  val addrOut = ADDR1MUX + ADDR2MUX
+  val src2Mux = Mux(isImm, offset5, src2)
+
   val PCMUX = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
     0.U -> (PC + 1.U),
     1.U -> baseR,
@@ -70,14 +112,6 @@ class DataPath extends Module {
     2.U -> SP
   ))
 
-  val ADDR1MUX = Mux(SIG.ADDR1_MUX, baseR, PC)
-
-  val ADDR2MUX = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
-    0.U -> 0.U,
-    1.U -> offset6,
-    2.U -> offset9,
-    3.U -> offset11
-  ))
 
   //val SPMUX
 
@@ -91,8 +125,7 @@ class DataPath extends Module {
 
   //other mux
 
-  val addrOut = ADDR1MUX + ADDR2MUX
-  val src2Mux = Mux(isImm, offset5, src2)
+  
 
   /*******
   *  LD
@@ -122,6 +155,8 @@ class DataPath extends Module {
     BEN := IR(11) & N + IR(10) & Z + IR(9) & P
   }
 
+  regfile.io.wen := true.B // TODO: Remove this
+  regfile.io.wAddr := DontCare
   when(SIG.LD_REG) {
     regfile.io.wen := true.B
     regfile.io.wAddr := DRMUX

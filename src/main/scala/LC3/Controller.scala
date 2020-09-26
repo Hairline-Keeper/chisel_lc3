@@ -120,7 +120,7 @@ class ctrlSigRom extends Module with ControlParam{
 
 object ctrlSigRom {
   def apply(sel: UInt): signalEntry = {
-    val ctrlSig = new ctrlSigRom
+    val ctrlSig = Module(new ctrlSigRom)
     ctrlSig.io.sel := sel
     ctrlSig.io.out
   }
@@ -128,14 +128,7 @@ object ctrlSigRom {
 
 class Controller extends Module with ControlParam {
   val io = IO(new Bundle{
-    val in  = new Bundle {
-      val sig = Input(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
-      val int = Input(Bool())         // high priority device request
-      val r   = Input(Bool())         // ready: memory operations is finished
-      val ir  = Input(UInt(16.W))     // opcode
-      val ben = Input(Bool())         // br can be executed
-      val psr = Input(Bool())         // privilege: supervisor or user
-    }
+    val in  = Flipped(new FeedBack)
     val out = Output(new signalEntry)     // output control signal
   })
 
@@ -152,12 +145,12 @@ class Controller extends Module with ControlParam {
     is (5.U) { state := 18.U }
     is (6.U) { state := 25.U }
     is (7.U) { state := 23.U }
-    is (8.U) { state := Mux(psr(4), 44.U, 36.U)}         //RTI
+    is (8.U) { state := Mux(psr, 44.U, 36.U)}         //RTI
     is (9.U) { state := 18.U }
     is (10.U) { state := 24.U }
     is (11.U) { state := 29.U }
     is (12.U) { state := 18.U }
-    is (13.U) { state := Mux(psr(4), 45.U, 37.U) }        //To13
+    is (13.U) { state := Mux(psr, 45.U, 37.U) }        //To13
     is (14.U) { state := 18.U }
     is (15.U) { state := 28.U }
     is (16.U) { state := Mux(r, 18.U, 16.U)}
@@ -176,9 +169,9 @@ class Controller extends Module with ControlParam {
     is (29.U) { state := Mux(r, 31.U, 29.U) }
     is (30.U) { state := 18.U }
     is (31.U) { state := 23.U }
-    is (32.U) { state := ir(15,12) }
+    is (32.U) { state := ir }
     is (33.U) { state := Mux(r, 35.U, 33.U)}
-    is (34.U) { state := Mux(psr(4), 59.U, 51.U) }
+    is (34.U) { state := Mux(psr, 59.U, 51.U) }
     is (35.U) { state := 32.U }
     is (36.U) { state := Mux(r, 38.U, 36.U)}
     is (37.U) { state := 41.U }

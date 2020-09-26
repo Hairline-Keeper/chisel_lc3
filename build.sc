@@ -23,7 +23,7 @@ trait HasChisel3 extends ScalaModule {
 
 trait HasChiselTests extends CrossSbtModule  {
   object test extends Tests {
-    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.4", ivy"edu.berkeley.cs::chisel-iotesters:1.2+")
+    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.8", ivy"edu.berkeley.cs::chisel-iotesters:1.2+")
     def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 }
@@ -45,16 +45,19 @@ object chisel_lc3 extends HasChisel3 with CrossSbtModule with HasMacroParadise{
     override def ivyDeps = super.ivyDeps() ++ Agg(
       ivy"org.scalatest::scalatest:3.0.4",
       ivy"edu.berkeley.cs::chisel-iotesters:1.4.1+",
-      ivy"edu.berkeley.cs::chiseltest:0.2.1"
+      ivy"edu.berkeley.cs::chiseltest:0.2.1+"
     )
 
-    def testFrameworks = Seq(
-      "org.scalatest.tools.Framework"
-    )
+    def testFrameworks = T {
+      Seq(
+        "org.scalatest.tools.Framework",
+        "utest.runner.Framework"
+      )
+    }
 
     def testOnly(args: String*) = T.command {
       super.runMain("org.scalatest.tools.Runner", args: _*)
     }
-    def mainClass = Some("ALUtest.scala.ALUTest")
+    // def mainClass = Some("chisel_lc3.LC3.Top")
   }
 }
