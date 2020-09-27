@@ -25,22 +25,31 @@ class DataPath extends Module {
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
 
-  bus.io.GateSig := (io.signal)(27,20)
-  bus.io.Gatedata := DontCare // TODO: Connect Gate to Bus
+  bus.io.GateSig := Cat(Seq(
+    SIG.GATE_PC,
+    SIG.GATE_MDR,
+    SIG.GATE_ALU,
+    SIG.GATE_MARMUX,
+    SIG.GATE_VECTOR,
+    SIG.GATE_PC1,
+    SIG.GATE_PSR,
+    SIG.GATE_SP
+  ))
+  bus.io.GateData := DontCare // TODO: Connect Gate to Bus
 
   alu.io.ina := regfile.io.r1Data
   alu.io.inb := regfile.io.r2Data
-  alu.io.op := io.sig.ALUK
+  alu.io.op := SIG.ALUK
 
-  regfile.io.wen := !io.sig.LD_REG
+  regfile.io.wen := !SIG.LD_REG
   regfile.io.wAddr := DRMUX
   regfile.io.r1Addr := SR1MUX
   regfile.io.r2Addr := IR(2, 0)
-  regfile.io.wData := Mux(io.signal.LD_REG, bus.io.out, 0.U)
+  regfile.io.wData := Mux(SIG.LD_REG, bus.io.out, 0.U)
 
   io.mem.addr := DontCare
   io.mem.wen := SIG.MIO_EN && !SIG.R_W
-  io.mem.wdata := Mux(io.signal.LD_MDR, bus.io.out, 0.U)
+  io.mem.wdata := Mux(SIG.LD_MDR, bus.io.out, 0.U)
 
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
