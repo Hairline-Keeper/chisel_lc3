@@ -28,14 +28,10 @@ class DataPath extends Module {
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
 
-
-
   val BEN = RegInit(false.B)
   val N = RegInit(false.B)
   val P = RegInit(false.B)
   val Z = RegInit(false.B)
-
-
 
   val PC  = RegInit(0.U(16.W))
   val IR  = RegInit(0.U(16.W))
@@ -50,17 +46,17 @@ class DataPath extends Module {
   val dst   = IR(11,9)
 
   //offset
-  val offset5  = SignExt(IR(4,0), 5)  //imm
-  val offset6  = SignExt(IR(5,0), 6)
-  val offset9  = SignExt(IR(8,0), 9)
-  val offset11 = SignExt(IR(10,0), 11)
-  val offset8  = ZeroExt(IR(7,0), 8)  //int vec
+  val offset5  = SignExt(IR(4,0),  16)  //imm
+  val offset6  = SignExt(IR(5,0),  16)
+  val offset9  = SignExt(IR(8,0),  16)
+  val offset11 = SignExt(IR(10,0), 16)
+  val offset8  = ZeroExt(IR(7,0),  16)  //int vec
 
   /*******
   *  Mux
   ********/
   
-  val ADDR1MUX = Mux(SIG.ADDR1_MUX, baseR, PC)
+  val ADDR1MUX = Mux(SIG.ADDR1_MUX, regfile.io.r1Data, PC)
 
   val ADDR2MUX = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
     0.U -> 0.U,
@@ -70,11 +66,10 @@ class DataPath extends Module {
   ))
 
   val addrOut = ADDR1MUX + ADDR2MUX
-  val SR2MUX = Mux(isImm, offset5, src2)
 
   val PCMUX = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
     0.U -> (PC + 1.U),
-    1.U -> baseR,
+    1.U -> bus.io.out,
     2.U -> addrOut
   ))
 
@@ -90,41 +85,38 @@ class DataPath extends Module {
     2.U -> SP
   ))
 
+  val SR2MUX = Mux(isImm, offset5, regfile.io.r2Data)
 
-  //val SPMUX
-
-  val MARMUX = Mux(SIG.MAR_MUX, addrOut, offset8)
-  
-  //val VectorMUX
-
-  //val PSRMUX
-
-
-
-  //other mux
-
-  bus.io.GateSig := Cat(Seq(
-    SIG.GATE_PC,
-    SIG.GATE_MDR,
-    SIG.GATE_ALU,
-    SIG.GATE_MARMUX,
-    SIG.GATE_VECTOR,
-    SIG.GATE_PC1,
-    SIG.GATE_PSR,
-    SIG.GATE_SP
+  val SPMUX = MuxLookup(SIG.SP_MUX, regfile.io.r1Data+1.U, Seq(
+    0.U -> (regfile.io.r1Data+1.U),
+    1.U -> (regfile.io.r1Data-1.U),
+    2.U -> SP, // TODO: Supervisor StackPointer
+    3.U -> SP  // TODO: User StackPointer
   ))
-  bus.io.GateData := DontCare // TODO: Connect Gate to Bus
 
+  val MARMUX = Mux(SIG.MAR_MUX, offset8, addrOut)
+  
+  val VectorMUX = MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
+    0.U -> 0.U,
+    1.U -> 0.U,
+    2.U -> 0.U
+  ))
+
+  val PSRMUX = 0.U
+
+  /*********** ALU ****************/
   alu.io.ina := regfile.io.r1Data
   alu.io.inb := regfile.io.r2Data
   alu.io.op := SIG.ALUK
 
+  /*********** Regfile ****************/
   regfile.io.wen := !SIG.LD_REG
   regfile.io.wAddr := DRMUX
   regfile.io.r1Addr := SR1MUX
   regfile.io.r2Addr := IR(2, 0)
   regfile.io.wData := Mux(SIG.LD_REG, bus.io.out, 0.U)
 
+  /*********** Memory ****************/
   io.mem.addr := DontCare
   io.mem.wen := SIG.MIO_EN && !SIG.R_W
   io.mem.wdata := Mux(SIG.LD_MDR, bus.io.out, 0.U)
@@ -139,13 +131,6 @@ class DataPath extends Module {
 
   val dstData = WireInit(regfile.io.wData)
 
-
-  /*********** Datapath ****************/
-
-  
-
-  
-
   /*******
   *  LD
   ********/
@@ -159,12 +144,14 @@ class DataPath extends Module {
     //when(SIG.GATE_SP)     { MAR :=  SPMUX }                   //37 39 47 59
   }
 
-  when(SIG.LD_MDR) {
-    when(SIG.GATE_ALU)  { MDR := alu.io.out }  //23
-    when(SIG.GATE_PC1)  { MDR := PC - 1.U }
-    when(SIG.GATE_PSR)  { MDR := PSR }
-    //when(SIG.MIO_EN)    { MDR := MEMORY.IO. } //要先写memory
-  }
+  // when(SIG.LD_MDR) {
+  //   when(SIG.GATE_ALU)  { MDR := alu.io.out }  //23
+  //   when(SIG.GATE_PC1)  { MDR := PC - 1.U }
+  //   when(SIG.GATE_PSR)  { MDR := PSR }
+  //   //when(SIG.MIO_EN)    { MDR := MEMORY.IO. } //要先写memory
+  // }
+
+  MDR := Mux(SIG.MIO_EN, 0.U, bus.io.out) // TODO: Add MIO input
 
   when(SIG.LD_IR) {
     when(SIG.GATE_MDR) { IR := MDR }
@@ -190,16 +177,36 @@ class DataPath extends Module {
     N := dstData(15)
     Z := !dstData.orR()
     P := !dstData(15) && dstData.orR()
+    assert(N + Z + P === 1.U, "N,Z,P only one can be true")
   }
 
   when(SIG.LD_PC) {
     PC := PCMUX
     when(SIG.GATE_MDR) { PC := MDR }
   }
-//
-//
-//
-//
 
-
+  //*************
+  //  SimpleBus
+  //*************
+  bus.io.GateSig := Cat(Seq(
+    SIG.GATE_PC,
+    SIG.GATE_MDR,
+    SIG.GATE_ALU,
+    SIG.GATE_MARMUX,
+    SIG.GATE_VECTOR,
+    SIG.GATE_PC1,
+    SIG.GATE_PSR,
+    SIG.GATE_SP
+  ))
+  bus.io.GateData(0) := PC
+  bus.io.GateData(1) := MDR
+  bus.io.GateData(2) := alu.io.out
+  bus.io.GateData(3) := MARMUX
+  bus.io.GateData(4) := Cat(1.U(8.W), 0.U) // TODO: Interrupt
+  bus.io.GateData(5) := PC-1.U
+  bus.io.GateData(6) := Cat(Seq(  // TODO: Add some PSR signal
+    0.U(13.W),
+    PSRMUX
+  ))
+  bus.io.GateData(7) := SPMUX
 }

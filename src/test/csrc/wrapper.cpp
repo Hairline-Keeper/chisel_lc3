@@ -9,7 +9,11 @@ VTop* top;                  // 顶层dut对象指针
 VerilatedVcdC* tfp;             // 波形生成对象指针
 
 vluint64_t main_time = 0;           // 仿真时间戳
-// const vluint64_t sim_time = 1024;   // 最大仿真时间戳
+const vluint64_t sim_time = 1024;   // 最大仿真时间戳
+
+double sc_time_stamp() {
+    return main_time;
+}
 
 int main(int argc, char **argv)
 {
@@ -27,11 +31,17 @@ int main(int argc, char **argv)
 
     // int count = 0;
 
-    while(!Verilated::gotFinish())// && main_time < sim_time)
+    while(!Verilated::gotFinish() && main_time < sim_time)// && main_time < sim_time)
     {
         // 仿真过程
         // top->reset = 0;
         // top->S = count;         // 模块S输出递增
+        if ((main_time % 10) == 1) {
+            top->clock = 1;       // Toggle clock
+        }
+        if ((main_time % 10) == 6) {
+            top->clock = 0;
+        }
         top->eval();            // 仿真时间步进
         tfp->dump(main_time);   // 波形文件写入步进
         // count++;

@@ -43,4 +43,4 @@ emu: $(EMU)
 clean:
 	rm -rf ./build
 
-.PHONY: test clean
+.PHONY: verilog test clean emu
