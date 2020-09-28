@@ -25,32 +25,6 @@ class DataPath extends Module {
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
 
-  bus.io.GateSig := Cat(Seq(
-    SIG.GATE_PC,
-    SIG.GATE_MDR,
-    SIG.GATE_ALU,
-    SIG.GATE_MARMUX,
-    SIG.GATE_VECTOR,
-    SIG.GATE_PC1,
-    SIG.GATE_PSR,
-    SIG.GATE_SP
-  ))
-  bus.io.GateData := DontCare // TODO: Connect Gate to Bus
-
-  alu.io.ina := regfile.io.r1Data
-  alu.io.inb := regfile.io.r2Data
-  alu.io.op := SIG.ALUK
-
-  regfile.io.wen := !SIG.LD_REG
-  regfile.io.wAddr := DRMUX
-  regfile.io.r1Addr := SR1MUX
-  regfile.io.r2Addr := IR(2, 0)
-  regfile.io.wData := Mux(SIG.LD_REG, bus.io.out, 0.U)
-
-  io.mem.addr := DontCare
-  io.mem.wen := SIG.MIO_EN && !SIG.R_W
-  io.mem.wdata := Mux(SIG.LD_MDR, bus.io.out, 0.U)
-
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
 
@@ -69,17 +43,6 @@ class DataPath extends Module {
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
 
-  
-  io.out.sig := DontCare
-  io.out.int := false.B
-  io.out.r := io.mem.R
-  io.out.ir := IR(15, 12)
-  io.out.ben := BEN
-  io.out.psr := PSR(15)
-
-
-  val dstData = WireInit(regfile.io.wData)
-
   /*********** IR Decode ****************/
   val baseR = IR(8,6)
   val src2  = IR(2,0)
@@ -92,8 +55,6 @@ class DataPath extends Module {
   val offset9  = SignExt(IR(8,0), 9)
   val offset11 = SignExt(IR(10,0), 11)
   val offset8  = ZeroExt(IR(7,0), 8)  //int vec
-
-  /*********** Datapath ****************/
 
   /*******
   *  Mux
@@ -109,7 +70,7 @@ class DataPath extends Module {
   ))
 
   val addrOut = ADDR1MUX + ADDR2MUX
-  val src2Mux = Mux(isImm, offset5, src2)
+  val SR2MUX = Mux(isImm, offset5, src2)
 
   val PCMUX = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
     0.U -> (PC + 1.U),
@@ -141,6 +102,47 @@ class DataPath extends Module {
 
 
   //other mux
+
+  bus.io.GateSig := Cat(Seq(
+    SIG.GATE_PC,
+    SIG.GATE_MDR,
+    SIG.GATE_ALU,
+    SIG.GATE_MARMUX,
+    SIG.GATE_VECTOR,
+    SIG.GATE_PC1,
+    SIG.GATE_PSR,
+    SIG.GATE_SP
+  ))
+  bus.io.GateData := DontCare // TODO: Connect Gate to Bus
+
+  alu.io.ina := regfile.io.r1Data
+  alu.io.inb := regfile.io.r2Data
+  alu.io.op := SIG.ALUK
+
+  regfile.io.wen := !SIG.LD_REG
+  regfile.io.wAddr := DRMUX
+  regfile.io.r1Addr := SR1MUX
+  regfile.io.r2Addr := IR(2, 0)
+  regfile.io.wData := Mux(SIG.LD_REG, bus.io.out, 0.U)
+
+  io.mem.addr := DontCare
+  io.mem.wen := SIG.MIO_EN && !SIG.R_W
+  io.mem.wdata := Mux(SIG.LD_MDR, bus.io.out, 0.U)
+  
+  io.out.sig := DontCare
+  io.out.int := false.B
+  io.out.r := io.mem.R
+  io.out.ir := IR(15, 12)
+  io.out.ben := BEN
+  io.out.psr := PSR(15)
+
+
+  val dstData = WireInit(regfile.io.wData)
+
+
+  /*********** Datapath ****************/
+
+  
 
   
 
