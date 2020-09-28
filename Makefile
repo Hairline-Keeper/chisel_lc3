@@ -17,22 +17,28 @@ test:
 	sbt testOnly chisel_lc3.ALUtest.tests
 	# mill chisel_lc3.test.testOnly ALUTest.tests
 
+SIM_TOP = Top
+
 EMU_CSRC_DIR = $(abspath ./src/test/csrc)
 EMU_CXXFILES = $(shell find $(EMU_CSRC_DIR) -name "*.cpp")
 
-EMU_MK := $(BUILD_DIR)/emu-compile/V$(TOP).mk
+EMU_MK := $(BUILD_DIR)/emu-compile/V$(SIM_TOP).mk
 EMU_DEPS := $(EMU_CXXFILES)
 EMU := $(BUILD_DIR)/emu
 
+VERILATOR_FLAGS = --top-module $(SIM_TOP) \
+	-I$(abspath $(BUILD_DIR)) \
+	--trace
+
 $(EMU_MK): $(TOP_V) $(EMU_DEPS)
 	@mkdir -p $(@D)
-	verilator --cc --exe --top-module $(TOP) \
+	verilator --cc --exe $(VERILATOR_FLAGS) \
 		-o $(abspath $(EMU)) -Mdir $(@D) $^ $(EMU_DEPS)
 
 $(EMU): $(EMU_MK)
 	$(MAKE) -C $(dir $(EMU_MK)) -f $(abspath $(EMU_MK))
 
-emu: $(EMU_MK)
+emu: $(EMU)
 
 clean:
 	rm -rf ./build
