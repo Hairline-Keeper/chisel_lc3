@@ -3,21 +3,38 @@ package LC3
 import chisel3._
 import chisel3.util._
 
+class RAMHelper() extends BlackBox {
+  val io = IO(new Bundle {
+    val clk = Input(Clock())
+    val rIdx = Input(UInt(16.W))
+    val rdata = Output(UInt(16.W))
+    val wIdx = Input(UInt(16.W))
+    val wdata = Input(UInt(16.W))
+    val wmask = Input(UInt(16.W))
+    val wen = Input(Bool())
+  })
+}
+
 class MemIO extends Bundle {
-  val addr = Input(UInt(16.W))
-  val wen = Input(Bool())
-  val wdata = Input(UInt(16.W))
-  val R = Output(Bool())
+  val rIdx = Input(UInt(16.W))
   val rdata = Output(UInt(16.W))
+  val wIdx = Input(UInt(16.W))
+  val wdata = Input(UInt(16.W))
+  // val wmask = Input(UInt(16.W))
+  val wen = Input(Bool())
+  val R = Output(Bool())
 }
 
 class Memory extends Module {
   val io = IO(new MemIO)
   
-  val mem = Mem(1<<16, UInt(16.W))
-  when(io.wen) {
-    mem(io.addr) := io.wdata
-  }
-  io.rdata := mem(io.addr)
+  val mem = Module(new RAMHelper())
+  mem.io.clk := clock
+  mem.io.rIdx := io.rIdx
+  io.rdata := mem.io.rdata
+  mem.io.wIdx := io.wIdx
+  mem.io.wdata := io.wdata
+  mem.io.wmask := "b11".U
+  mem.io.wen := io.wen
   io.R := true.B
 }

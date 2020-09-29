@@ -20,17 +20,19 @@ test:
 SIM_TOP = Top
 
 EMU_CSRC_DIR = $(abspath ./src/test/csrc)
+EMU_VSRC_DIR = $(abspath ./src/test/vsrc)
 EMU_CXXFILES = $(shell find $(EMU_CSRC_DIR) -name "*.cpp")
+EMU_VFILES = $(shell find $(EMU_VSRC_DIR) -name "*.v" -or -name "*.sv")
 
 EMU_MK := $(BUILD_DIR)/emu-compile/V$(SIM_TOP).mk
-EMU_DEPS := $(EMU_CXXFILES)
+EMU_DEPS := $(EMU_VFILES) $(EMU_CXXFILES)
 EMU := $(BUILD_DIR)/emu
 
 VERILATOR_FLAGS = --top-module $(SIM_TOP) \
 	-I$(abspath $(BUILD_DIR)) \
 	--trace
 
-$(EMU_MK): $(TOP_V) $(EMU_DEPS)
+$(EMU_MK): $(TOP_V) | $(EMU_DEPS)
 	@mkdir -p $(@D)
 	verilator --cc --exe $(VERILATOR_FLAGS) \
 		-o $(abspath $(EMU)) -Mdir $(@D) $^ $(EMU_DEPS)
@@ -39,6 +41,7 @@ $(EMU): $(EMU_MK)
 	$(MAKE) -C $(dir $(EMU_MK)) -f $(abspath $(EMU_MK))
 
 emu: $(EMU)
+	$(EMU)
 
 clean:
 	rm -rf ./build

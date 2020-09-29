@@ -33,7 +33,7 @@ class DataPath extends Module {
   val P = RegInit(false.B)
   val Z = RegInit(false.B)
 
-  val PC  = RegInit(0.U(16.W))
+  val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
@@ -117,9 +117,10 @@ class DataPath extends Module {
   regfile.io.wData := Mux(SIG.LD_REG, bus.io.out, 0.U)
 
   /*********** Memory ****************/
-  io.mem.addr := DontCare
-  io.mem.wen := SIG.MIO_EN && !SIG.R_W
+  io.mem.rIdx := DontCare // TODO: Do what you need do
+  io.mem.wIdx := DontCare
   io.mem.wdata := Mux(SIG.LD_MDR, bus.io.out, 0.U)
+  io.mem.wen := SIG.MIO_EN && !SIG.R_W
   
   io.out.sig := DontCare
   io.out.int := false.B

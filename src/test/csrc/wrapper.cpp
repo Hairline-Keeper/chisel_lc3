@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include "VTop.h"           // 译码器模块类
+#include "common.h"
 using namespace std;
 
 VTop* top;                  // 顶层dut对象指针
@@ -30,6 +31,8 @@ int main(int argc, char **argv)
     tfp->open("emu.vcd");
 
     // int count = 0;
+
+    init_ram();
 
     while(!Verilated::gotFinish() && main_time < sim_time)// && main_time < sim_time)
     {
