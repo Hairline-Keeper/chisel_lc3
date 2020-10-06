@@ -30,8 +30,6 @@ class DataPath extends Module {
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
 
-
-
   val BEN = RegInit(false.B)
   val N = RegInit(false.B)
   val P = RegInit(false.B)
@@ -42,6 +40,11 @@ class DataPath extends Module {
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
+
+  val KBDR = RegInit(0.U(16.W))
+  val KBSR = RegInit(0.U(16.W))
+  val DDR  = RegInit(0.U(16.W))
+  val DSR  = RegInit(0.U(16.W))
 
   val BUSOUT = WireInit(0.U(16.W))
   val BUSEN =  WireInit(false.B)
@@ -125,17 +128,25 @@ class DataPath extends Module {
   val dstData = WireInit(regfile.io.wData)
 
   /*********** Memory ****************/
-  io.mem.rIdx   := DontCare // TODO: Do what you need to do
-  io.mem.wIdx   := DontCare
+
+  // address control logic that convered by truth table
+  val MEM_EN = SIG.MIO_EN && !SIG.R_W
+  val IN_MUX = MuxCase(io.mem.rdata, Array(
+    (MEM_EN && (MAR === "hfe00".U)) -> KBSR, 
+    (MEM_EN && (MAR === "hfe02".U)) -> KBDR,
+    (MEM_EN && (MAR === "hfe04".U)) -> DSR,
+    (MEM_EN && (MAR < "hfe00".U)) -> io.mem.rdata
+    ))
+
+  val LD_KBSR = (MAR === "hfe00".U) && SIG.MIO_EN && SIG.R_W
+  val LD_DSR  = (MAR === "hfe04".U) && SIG.MIO_EN && SIG.R_W
+  val LD_DDR  = (MAR === "hfe06".U) && SIG.MIO_EN && SIG.R_W
+
+
+  io.mem.rIdx   := MAR
+  io.mem.wIdx   := MAR
   io.mem.wdata  := BUSOUT
-  io.mem.wen    := SIG.MIO_EN && !SIG.R_W
-  
-  io.out.sig  := DontCare
-  io.out.int  := false.B
-  io.out.r    := io.mem.R
-  io.out.ir   := IR(15, 12)
-  io.out.ben  := BEN
-  io.out.psr  := PSR(15)
+  io.mem.wen    := MEM_EN
 
   //*************
   //  SimpleBus
@@ -179,4 +190,17 @@ class DataPath extends Module {
     assert(N + Z + P === 1.U, "N,Z,P only one can be true")
   }
 
+  when(LD_KBSR) { KBSR := MDR }
+  when(LD_DSR)  { DSR  := MDR }
+  when(LD_DDR)  { DDR  := MDR }
+
+
+  //OUT//
+  io.out.sig  := DontCare
+  io.out.int  := false.B
+  io.out.r    := io.mem.R
+  io.out.ir   := IR(15, 12)
+  io.out.ben  := BEN
+  io.out.psr  := PSR(15)
 }
+
