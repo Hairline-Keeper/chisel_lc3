@@ -4,10 +4,9 @@ import chisel3._
 import chisel3.util._
 
 class FeedBack extends Bundle {
-  val sig = Output(UInt(10.W))     // control signal. sig[9:4]: j   sig[3:1]: cond   sig[0]: ird
   val int = Output(Bool())         // high priority device request
   val r   = Output(Bool())         // ready: memory operations is finished
-  val ir  = Output(UInt(4.W))      // opcode
+  val ir  = Output(UInt(5.W))      // ir(15,11)
   val ben = Output(Bool())         // br can be executed
   val psr = Output(Bool())         // privilege: supervisor or user
 }
@@ -181,7 +180,7 @@ class DataPath extends Module {
   when(SIG.LD_MDR) {  MDR := BUSOUT }
   when(SIG.LD_IR)  {  IR  := MDR }
   when(SIG.LD_BEN) {  BEN := IR(11) & N + IR(10) & Z + IR(9) & P }
-  when(SIG.LD_MAR) {  PC := PCMUX }
+  when(SIG.LD_MAR) {  PC  := PCMUX }
 
   when(SIG.LD_CC) {
     N := dstData(15)
@@ -196,10 +195,9 @@ class DataPath extends Module {
 
 
   //OUT//
-  io.out.sig  := DontCare
   io.out.int  := false.B
   io.out.r    := io.mem.R
-  io.out.ir   := IR(15, 12)
+  io.out.ir   := IR(15,11)
   io.out.ben  := BEN
   io.out.psr  := PSR(15)
 }
