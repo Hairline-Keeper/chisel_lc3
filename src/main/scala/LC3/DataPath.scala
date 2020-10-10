@@ -76,11 +76,12 @@ class DataPath extends Module {
 
   val addrOut = ADDR1MUX + ADDR2MUX
 
-  val PCMUX = MuxLookup(SIG.PC_MUX, PC + 1.U, Seq(
-    0.U -> (PC + 1.U),
+  val PCMUX = MuxLookup(SIG.PC_MUX, "h3000".U, Seq(
+    0.U -> Mux(PC===0.U, "h3000".U,  PC + 1.U),
     1.U -> BUSOUT,
     2.U -> addrOut
   ))
+
 
   val DRMUX = MuxLookup(SIG.DR_MUX, IR(11,9), Seq(
     0.U -> IR(11,9),
