@@ -5,4 +5,4 @@
 typedef uint16_t paddr_t;
 
 // init ram
-extern void init_ram();
+extern void init_ram(const char *img);

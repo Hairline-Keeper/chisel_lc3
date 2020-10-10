@@ -18,8 +18,7 @@ void display_ram() {
     }
 }
 
-void init_ram() {
-    const char *img = "./image/dummy.obj";
+void init_ram(const char *img) {
     FILE *fp = fopen(img, "rb");
     int ret;
     paddr_t start_addr;
@@ -36,7 +35,7 @@ void init_ram() {
 
   fseek(fp, 0, SEEK_END);
   img_size = ftell(fp) - 2;
-  printf("Image size = %ld Bytes\n", img_size);
+  // printf("Image size = %ld Bytes\n", img_size);
 
   fseek(fp, 2, SEEK_SET);
   ret = fread(&ram[start_addr], img_size, 1, fp);
@@ -46,7 +45,7 @@ void init_ram() {
     ram[i] = htons(ram[i]);
   }
 
-  printf("start addr = %x\n", start_addr);
+  // printf("start addr = %x\n", start_addr);
   // display_ram();
   // FIXME: Only x3000-xffff can use store image
 }

@@ -6,12 +6,24 @@ TEST_FILE = $(shell find ./src/test/scala -name '*.scala')
 
 .DEFAULT_GOAL = verilog
 
+
+IMAGE ?= dummy
+IMAGE_DIR = ./image
+LC3AS = $(IMAGE_DIR)/lc3as
+IMAGE_OBJ := $(IMAGE_DIR)/$(IMAGE).obj
+IMAGE_DEPS := $(IMAGE_DIR)/$(IMAGE).asm
+
 $(TOP_V): $(SCALA_FILE)
 	@mkdir -p $(@D)
 	mill chisel_lc3.run LC3.Top.SimMain -td $(@D) --output-file $(@F)
 	# sbt run chisel_lc3.LC3.Top.SimMain
 
 verilog: $(TOP_V)
+
+$(IMAGE_OBJ): $(IMAGE_DEPS)
+	$(LC3AS) $(IMAGE_DEPS)
+	
+compile: $(IMAGE_OBJ)
 
 test:
 	sbt testOnly chisel_lc3.ALUtest.tests
@@ -40,10 +52,12 @@ $(EMU_MK): $(TOP_V) | $(EMU_DEPS)
 $(EMU): $(EMU_MK)
 	$(MAKE) -C $(dir $(EMU_MK)) -f $(abspath $(EMU_MK))
 
-emu: $(EMU)
-	$(EMU)
+emu: $(EMU) | $(IMAGE_OBJ)
+	@echo $(IMAGE_OBJ)
+	$(EMU) -i $(IMAGE_OBJ)
 
 clean:
 	rm -rf ./build
+	rm -f ./image/*.obj ./image/*.sym
 
 .PHONY: verilog test clean emu
