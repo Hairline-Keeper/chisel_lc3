@@ -34,12 +34,13 @@ void init_ram() {
 
   fseek(fp, 0, SEEK_END);
   img_size = ftell(fp) - 2;
-  printf("Image size = %ldBytes\n", img_size);
+  printf("Image size = %ld Bytes\n", img_size);
 
   fseek(fp, 2, SEEK_SET);
   ret = fread(&ram[start_addr], img_size, 1, fp);
   assert(ret == 1);
   fclose(fp);
+  // display_ram();
   // FIXME: Only x3000-xffff can use store image
 }
 

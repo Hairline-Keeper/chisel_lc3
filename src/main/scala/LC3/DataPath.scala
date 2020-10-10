@@ -33,7 +33,7 @@ class DataPath extends Module {
   val P = RegInit(false.B)
   val Z = RegInit(false.B)
 
-  val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+  val PC  = RegInit(0x3000.U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
