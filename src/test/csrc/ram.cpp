@@ -1,4 +1,5 @@
 #include "common.h"
+#include <arpa/inet.h>
 
 #define RAMSIZE 65536
 
@@ -18,7 +19,7 @@ void display_ram() {
 }
 
 void init_ram() {
-    const char *img = "/home/zhangfw/playspace/chisel_lc3/image/hello.obj";
+    const char *img = "./image/dummy.obj";
     FILE *fp = fopen(img, "rb");
     int ret;
     paddr_t start_addr;
@@ -31,6 +32,7 @@ void init_ram() {
 
   ret = fread(&start_addr, sizeof(paddr_t), 1, fp);
   assert(ret == 1);
+  start_addr = htons(start_addr);
 
   fseek(fp, 0, SEEK_END);
   img_size = ftell(fp) - 2;
@@ -40,6 +42,11 @@ void init_ram() {
   ret = fread(&ram[start_addr], img_size, 1, fp);
   assert(ret == 1);
   fclose(fp);
+  for(int i = 0; i < RAMSIZE; i++) {
+    ram[i] = htons(ram[i]);
+  }
+
+  printf("start addr = %x\n", start_addr);
   // display_ram();
   // FIXME: Only x3000-xffff can use store image
 }
