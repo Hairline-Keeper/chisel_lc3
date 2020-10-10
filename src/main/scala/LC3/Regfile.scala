@@ -1,7 +1,6 @@
 package LC3
 
 import chisel3._
-import chisel3.experimental.IO
 
 class Regfile extends Module{
   val io = IO(new Bundle {
@@ -22,7 +21,12 @@ class Regfile extends Module{
 
   when(io.wen){
     regfile(io.wAddr) := io.wData
+    //printf("%d",io.wData)
   }
-  regfile(io.r1Addr) := io.r1Data
-  regfile(io.r2Addr) := io.r2Data
+  io.r1Data := regfile(io.r1Addr)
+  io.r2Data := regfile(io.r2Addr)
+  val R1 = regfile(1);
+  val R2 = regfile(2);
+  val R3 = regfile(3);
+  printf("R1=%d,R2=%d,R3=%d\n",R1,R2,R3)
 }

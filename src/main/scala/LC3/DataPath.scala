@@ -33,7 +33,7 @@ class DataPath extends Module {
   val BEN = RegInit(false.B)
   val N = RegInit(false.B)
   val P = RegInit(false.B)
-  val Z = RegInit(false.B)
+  val Z = RegInit(true.B)
 
 
   val PC  = Reg(UInt(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
@@ -190,7 +190,7 @@ class DataPath extends Module {
   when(SIG.LD_MDR) {  MDR := Mux(SIG.MIO_EN, IN_MUX, BUSOUT) }
 
   when(SIG.LD_IR)  {  IR  := MDR }
-  when(SIG.LD_BEN) {  BEN := IR(11) & N + IR(10) & Z + IR(9) & P }
+  when(SIG.LD_BEN) {  BEN := IR(11) && N || IR(10) && Z || IR(9) && P }
   when(SIG.LD_PC || GTimer() === 0.U)  {
     PC := PCMUX
   }
@@ -201,7 +201,7 @@ class DataPath extends Module {
     N := dstData(15)
     Z := !dstData.orR()
     P := !dstData(15) && dstData.orR()
-    assert(N + Z + P === 1.U, "N,Z,P only one can be true")
+    //assert(N + Z + P === 1.U, "N,Z,P only one can be true")
   }
 
   when(LD_KBSR) { KBSR := MDR }
