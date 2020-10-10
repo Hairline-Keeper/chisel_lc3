@@ -19,7 +19,8 @@ void display_ram() {
 }
 
 void init_ram() {
-    const char *img = "./image/dummy.obj";
+    const char *img = "./image/hello.obj";
+    
     FILE *fp = fopen(img, "rb");
     int ret;
     paddr_t start_addr;
