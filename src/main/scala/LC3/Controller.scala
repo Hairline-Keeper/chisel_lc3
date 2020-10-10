@@ -133,7 +133,7 @@ class Controller extends Module with ControlParam {
   })
 
   val (sig, int, r, ir, ben, psr, out) = (io.in.sig, io.in.int, io.in.r, io.in.ir, io.in.ben, io.in.psr, io.out)
-  val state = RegInit(18.U(stateBits.W))
+  val state = RegInit(0.U(stateBits.W))
   out := ctrlSigRom(state)
 
   switch (state) {

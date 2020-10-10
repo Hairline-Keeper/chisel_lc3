@@ -35,7 +35,8 @@ class DataPath extends Module {
   val P = RegInit(false.B)
   val Z = RegInit(false.B)
 
-  val PC  = RegInit(0x3000.U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+
+  val PC  = Reg(UInt(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
@@ -76,8 +77,8 @@ class DataPath extends Module {
 
   val addrOut = ADDR1MUX + ADDR2MUX
 
-  val PCMUX = MuxLookup(SIG.PC_MUX, "h3000".U, Seq(
-    0.U -> Mux(PC===0.U, "h3000".U,  PC + 1.U),
+  val PCMUX = MuxLookup(SIG.PC_MUX, 0x3000.U, Seq(
+    0.U -> Mux(PC===0.U, 0x3000.U,  PC + 1.U),
     1.U -> BUSOUT,
     2.U -> addrOut
   ))
@@ -133,16 +134,22 @@ class DataPath extends Module {
   // address control logic that convered by truth table
   val MEM_EN = SIG.MIO_EN && !SIG.R_W
   val IN_MUX = MuxCase(io.mem.rdata, Array(
-    (MEM_EN && (MAR === "hfe00".U)) -> KBSR, 
-    (MEM_EN && (MAR === "hfe02".U)) -> KBDR,
-    (MEM_EN && (MAR === "hfe04".U)) -> DSR,
-    (MEM_EN && (MAR < "hfe00".U)) -> io.mem.rdata
+    (MEM_EN && (MAR === 0xfe00.U)) -> KBSR,
+    (MEM_EN && (MAR === 0xfe02.U)) -> KBDR,
+    (MEM_EN && (MAR === 0xfe04.U)) -> DSR,
+    (MEM_EN && (MAR < 0xfe00.U)) -> io.mem.rdata
     ))
 
-  val LD_KBSR = (MAR === "hfe00".U) && SIG.MIO_EN && SIG.R_W
-  val LD_DSR  = (MAR === "hfe04".U) && SIG.MIO_EN && SIG.R_W
-  val LD_DDR  = (MAR === "hfe06".U) && SIG.MIO_EN && SIG.R_W
+  val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
+  val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
+  val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
 
+  val in_mux = Wire(UInt(16.W)) //  for debug
+  val mem_en = Wire(UInt(16.W)) //  for debug
+  in_mux:= IN_MUX
+  mem_en := MEM_EN
+  dontTouch(in_mux)
+  dontTouch(mem_en)
 
   io.mem.rIdx   := MAR
   io.mem.wIdx   := MAR
@@ -179,10 +186,16 @@ class DataPath extends Module {
   *  LD
   ********/
   when(SIG.LD_MAR) {  MAR := BUSOUT }
-  when(SIG.LD_MDR) {  MDR := BUSOUT }
+
+  when(SIG.LD_MDR) {  MDR := Mux(SIG.MIO_EN, IN_MUX, BUSOUT) }
+
   when(SIG.LD_IR)  {  IR  := MDR }
   when(SIG.LD_BEN) {  BEN := IR(11) & N + IR(10) & Z + IR(9) & P }
-  when(SIG.LD_MAR) {  PC := PCMUX }
+  when(SIG.LD_PC || GTimer() === 0.U)  {
+    PC := PCMUX
+  }
+
+
 
   when(SIG.LD_CC) {
     N := dstData(15)
