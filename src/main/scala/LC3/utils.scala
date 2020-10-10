@@ -17,3 +17,11 @@ object ZeroExt {
     if (aLen == len) a else Cat(0.U((len - aLen).W), a)
   }
 }
+
+object GTimer {
+  def apply() = {
+    val c = RegInit(0.U(64.W))
+    c := c + 1.U
+    c
+  }
+}
