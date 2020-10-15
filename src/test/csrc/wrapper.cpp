@@ -15,7 +15,7 @@ VTop* top;                  // 顶层dut对象指针
 VerilatedVcdC* tfp;             // 波形生成对象指针
 
 vluint64_t main_time = 0;           // 仿真时间戳
-const vluint64_t sim_time = 1024;   // 最大仿真时间戳
+const vluint64_t sim_time = 3000;   // 最大仿真时间戳
 
 char image[MAX_IMAGE_NAME_LEN] = {"./image/dummy.obj"};
 
