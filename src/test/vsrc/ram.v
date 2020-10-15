@@ -5,7 +5,7 @@ import "DPI-C" function void ram_helper
   output shortint    rdata,
   input  shortint    wIdx,
   input  shortint    wdata,
-  input  shortint    wmask,
+  // input  shortint    wmask,
   input  bit    wen
 );
 
@@ -15,12 +15,12 @@ module RAMHelper(
   output [`RAMWIDTH-1:0] rdata,
   input  [`RAMWIDTH-1:0] wIdx,
   input  [`RAMWIDTH-1:0] wdata,
-  input  [`RAMWIDTH-1:0] wmask,
+  // input  [`RAMWIDTH-1:0] wmask,
   input         wen
 );
 
   always @(posedge clk) begin
-    ram_helper(rIdx, rdata, wIdx, wdata, wmask, wen);
+    ram_helper(rIdx, rdata, wIdx, wdata, wen);
   end
 
 endmodule

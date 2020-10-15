@@ -1,7 +1,6 @@
 package LC3
 
 import chisel3._
-import chisel3.util._
 
 class RAMHelper() extends BlackBox {
   val io = IO(new Bundle {
@@ -10,7 +9,7 @@ class RAMHelper() extends BlackBox {
     val rdata = Output(UInt(16.W))
     val wIdx = Input(UInt(16.W))
     val wdata = Input(UInt(16.W))
-    val wmask = Input(UInt(16.W))
+    //val wmask = Input(UInt(16.W))
     val wen = Input(Bool())
   })
 }
@@ -34,7 +33,7 @@ class Memory extends Module {
   io.rdata := mem.io.rdata
   mem.io.wIdx := io.wIdx
   mem.io.wdata := io.wdata
-  mem.io.wmask := "b11".U
+  //mem.io.wmask := "b11".U
   mem.io.wen := io.wen
   io.R := true.B
 }

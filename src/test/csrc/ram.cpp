@@ -6,8 +6,8 @@
 static paddr_t ram[RAMSIZE];
 static long img_size = 0;
 
-void display_ram() {
-    for(int i = 0; i < RAMSIZE; i++) {
+void display_ram(int start, int size) {
+    for(int i = start; i < start+size/2; i++) {
       if(i%8 == 0) {
           printf("%04x: ", i);
       }
@@ -16,6 +16,7 @@ void display_ram() {
           printf("\n");
       }
     }
+    printf("\n");
 }
 
 void init_ram(const char *img) {
@@ -45,13 +46,14 @@ void init_ram(const char *img) {
     ram[i] = htons(ram[i]);
   }
 
-  // printf("start addr = %x\n", start_addr);
-  // display_ram();
+
+  printf("start addr = %x\n", start_addr);
+  display_ram(start_addr,img_size);
   // FIXME: Only x3000-xffff can use store image
 }
 
-extern "C" void ram_helper(
-    paddr_t rIdx, paddr_t *rdata, paddr_t wIdx, paddr_t wdata, paddr_t wmask, uint8_t wen) {
+extern "C" void ram_helper(paddr_t rIdx, paddr_t *rdata, paddr_t wIdx, paddr_t wdata, /*paddr_t wmask,*/ uint8_t wen) {
   *rdata = ram[rIdx];
-  if (wen) { ram[wIdx] = (ram[wIdx] & ~wmask) | (wdata & wmask); }
+  if (wen) ram[wIdx] = wdata;
+  //printf("[debug] rIdx=%4x, *rdata=%4x, wIdx=%4x, *wdata=%4x, wen=%x\n", rIdx,  *rdata, wIdx, wdata, wen);
 }
