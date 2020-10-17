@@ -12,5 +12,5 @@ class SimpleBusIO extends Bundle {
 class SimpleBus extends Module {
 	val io = IO(new SimpleBusIO)
 
-	io.out := io.GateData(OHToUInt(Reverse(io.GateSig)))
+	io.out := Mux(io.GateSig === 0.U, 0.U, io.GateData(OHToUInt(Reverse(io.GateSig))))
 }

@@ -105,7 +105,7 @@ class DataPath extends Module {
     3.U -> SP  // TODO: User StackPointer
   ))
 
-  val MARMUX = Mux(SIG.MAR_MUX, offset8, addrOut)
+  val MARMUX = Mux(SIG.MAR_MUX, addrOut, offset8)
   
   val VectorMUX = MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
     0.U -> 0.U,
