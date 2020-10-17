@@ -20,6 +20,7 @@ class DataPath extends Module {
   })
 
   val SIG = io.signal
+  val time = GTimer()
 
   
   val regfile = Module(new Regfile)
@@ -78,7 +79,7 @@ class DataPath extends Module {
   val addrOut = ADDR1MUX + ADDR2MUX
 
   val PCMUX = MuxLookup(SIG.PC_MUX, 0x3000.U, Seq(
-    0.U -> Mux(PC===0.U, 0x3000.U,  PC + 1.U),
+    0.U -> Mux(PC===0.U && time===0.U, 0x3000.U,  PC + 1.U),
     1.U -> BUSOUT,
     2.U -> addrOut
   ))
@@ -191,7 +192,7 @@ class DataPath extends Module {
 
   when(SIG.LD_IR)  {  IR  := MDR }
   when(SIG.LD_BEN) {  BEN := IR(11) && N || IR(10) && Z || IR(9) && P }
-  when(SIG.LD_PC || GTimer() === 0.U)  {
+  when(SIG.LD_PC || time === 0.U)  {
     PC := PCMUX
   }
 
