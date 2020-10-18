@@ -15,9 +15,10 @@ VTop* top;                  // 顶层dut对象指针
 VerilatedVcdC* tfp;             // 波形生成对象指针
 
 vluint64_t main_time = 0;           // 仿真时间戳
-const vluint64_t sim_time = 10240;   // 最大仿真时间戳
+const vluint64_t sim_time = -1;   // 最大仿真时间戳
 
 char image[MAX_IMAGE_NAME_LEN] = {"./image/dummy.obj"};
+int trace_en = false;
 
 double sc_time_stamp() {
     return main_time;
@@ -25,11 +26,14 @@ double sc_time_stamp() {
 
 static inline void parse_args(int argc, char *argv[]) {
     int arg;
-    while((arg = getopt(argc, argv, "i:")) != -1) {
+    while((arg = getopt(argc, argv, "i:t")) != -1) {
         switch (arg)
         {
         case 'i':
             strcpy(image, optarg);
+            break;
+        case 't':
+            trace_en = true;
             break;
         }
     }
@@ -47,15 +51,17 @@ int main(int argc, char **argv)
     tfp = new VerilatedVcdC;
 
     // tfp初始化工作
-    top->trace(tfp, 99);
-    tfp->open("./build/emu.vcd");
+    if(trace_en) {
+        top->trace(tfp, 99);
+        tfp->open("./build/emu.vcd");
+    }
 
     // int count = 0;
 
     init_ram(image);
-    init_keyboard();
+    // init_keyboard();
 
-    while(!Verilated::gotFinish())// && main_time < sim_time)// && main_time < sim_time)
+    while(!Verilated::gotFinish() && (sim_time == 0 || main_time < sim_time))
     {
         // 仿真过程
         // top->reset = 0;
@@ -69,6 +75,7 @@ int main(int argc, char **argv)
         top->eval();            // 仿真时间步进
         tfp->dump(main_time);   // 波形文件写入步进
         // count++;
+        polling_keyboard(); // 轮询检测键盘
         main_time++;
     }
     

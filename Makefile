@@ -6,6 +6,7 @@ TEST_FILE = $(shell find ./src/test/scala -name '*.scala')
 
 .DEFAULT_GOAL = verilog
 
+TRACE = -t
 
 IMAGE ?= dummy
 IMAGE_DIR = ./image
@@ -57,7 +58,7 @@ $(EMU): $(EMU_MK)
 	$(MAKE) -C $(dir $(EMU_MK)) -f $(abspath $(EMU_MK))
 
 emu: $(EMU) $(IMAGE_OBJ)
-	$(EMU) -i $(IMAGE_OBJ)
+	$(EMU) -i $(IMAGE_OBJ) $(TRACE)
 
 clean:
 	rm -rf ./build

@@ -135,9 +135,9 @@ class DataPath extends Module {
   // address control logic that convered by truth table
   val MEM_EN = SIG.MIO_EN && SIG.R_W
   val IN_MUX = MuxCase(io.mem.rdata, Array(
-    (MEM_EN && (MAR === 0xfe00.U)) -> KBSR,
-    (MEM_EN && (MAR === 0xfe02.U)) -> KBDR,
-    (MEM_EN && (MAR === 0xfe04.U)) -> DSR,
+    (MEM_EN && (MAR === 0xfe00.U)) -> io.mem.rdata,//KBSR,
+    (MEM_EN && (MAR === 0xfe02.U)) -> io.mem.rdata,//KBDR,
+    (MEM_EN && (MAR === 0xfe04.U)) -> io.mem.rdata,//DSR,
     (MEM_EN && (MAR < 0xfe00.U)) -> io.mem.rdata
     ))
 
@@ -154,7 +154,7 @@ class DataPath extends Module {
 
   io.mem.rIdx   := MAR
   io.mem.wIdx   := MAR
-  io.mem.wdata  := BUSOUT
+  io.mem.wdata  := MDR
   io.mem.wen    := MEM_EN
 
   //*************

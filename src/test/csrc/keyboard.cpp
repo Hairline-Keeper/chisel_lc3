@@ -1,5 +1,9 @@
 #include "common.h"
+#include <string.h>
 #include <pthread.h>
+#include <mutex>              
+#include <queue>              
+#include <condition_variable> 
 
 #define KBSR 0xFE00
 #define KBDR 0xFE02
@@ -8,55 +12,49 @@
 
 #define KEY_QUEUE_LEN 16
 
-#define QUEUE_FULL (key_head == (key_tail + 1)%KEY_QUEUE_LEN)
-#define QUEUE_EMPTY (key_head == key_tail)
+static char str[KEY_QUEUE_LEN];
+static int str_len;
+static std::queue<int> key_queue;
 
-static int key_queue[KEY_QUEUE_LEN];
-static int key_head = 0, key_tail = 0; 
-static int kbsr;
+pthread_mutex_t mutex;
+pthread_cond_t not_full, not_empty;
 
-void* keyboard_listen(void* args) {
-    char c;
+static int get_str() {
+    int len;
+    fd_set rfds;
+    struct timeval tv;
 
-    while(1) {
-        c = getchar();
-        // printf("keyboard input: %c\n", c);
-        if(!QUEUE_FULL) {
-            key_queue[key_tail] = c;
-            key_tail = (key_tail + 1)%KEY_QUEUE_LEN;
-        }
+    FD_ZERO(&rfds);
+    FD_SET(0, &rfds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 10; //设置等待超时时间
+
+    //检测键盘是否有输入
+    if (select(1, &rfds, NULL, NULL, &tv) > 0)
+    {
+        fgets(str, KEY_QUEUE_LEN, stdin); 
+        str_len = strlen(str);
+        str[--str_len] = '\0';
+        return str_len;
     }
-
     return 0;
 }
 
-void* keyboard_send(void* args) {
-    while(1) {
-        // printf("head=%d, tail=%d\n", key_head, key_tail);
-        if(!(key_head == key_tail)) {
-            kbsr = read_ram(KBSR);
-            printf("kbsr=%x\n", kbsr);
-            if(kbsr & 0x8000) {
-                printf("Try to send...\n");
-                kbsr = kbsr ^ 0x8000;
-                write_ram(KBSR, kbsr);
-                write_ram(KBDR, key_queue[key_head]);
-                key_head = (key_head + 1)%KEY_QUEUE_LEN;
+void polling_keyboard() {
+    if(get_str()) {
+        printf("get input: %s\n", str);
+        for(int i = 0; i < str_len; i++) {
+            if(key_queue.size() != KEY_QUEUE_LEN) {
+                key_queue.push(str[i]);
             }
         }
     }
 
-    return 0;
-}
-
-void init_keyboard() {
-    pthread_t kl_tid, ks_tid;
-    int ret;
-    ret = pthread_create(&kl_tid, NULL, keyboard_listen, NULL);
-    if (ret != 0)
-        printf("Keyboard listen thread create error: error_code=%d\n", ret);
-
-    ret = pthread_create(&ks_tid, NULL, keyboard_send, NULL);
-    if (ret != 0)
-        printf("Keyboard send thread create error: error_code=%d\n", ret);
+    if(read_ram(KBSR) == 0 && key_queue.size() != 0) {
+        int ch = key_queue.front();
+        printf("try to send %c ...\n", ch);
+        write_ram(KBSR, 0x8000);
+        write_ram(KBDR, ch);
+        key_queue.pop();
+    }
 }
