@@ -53,8 +53,9 @@ int main(int argc, char **argv)
     // int count = 0;
 
     init_ram(image);
+    init_keyboard();
 
-    while(!Verilated::gotFinish() && main_time < sim_time)// && main_time < sim_time)
+    while(!Verilated::gotFinish())// && main_time < sim_time)// && main_time < sim_time)
     {
         // 仿真过程
         // top->reset = 0;

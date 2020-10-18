@@ -38,10 +38,14 @@ EMU_VFILES = $(shell find $(EMU_VSRC_DIR) -name "*.v" -or -name "*.sv")
 
 EMU_MK := $(BUILD_DIR)/emu-compile/V$(SIM_TOP).mk
 EMU_DEPS := $(EMU_VFILES) $(EMU_CXXFILES)
+EMU_CXXFLAGS = -O3
+EMU_LDFLAGS = -lpthread
 EMU := $(BUILD_DIR)/emu
 
 VERILATOR_FLAGS = --top-module $(SIM_TOP) \
 	-I$(abspath $(BUILD_DIR)) \
+	-CFLAGS "$(EMU_CXXFLAGS)" \
+	-LDFLAGS "$(EMU_LDFLAGS)" \
 	--trace
 
 $(EMU_MK): $(TOP_V) | $(EMU_DEPS)
@@ -52,8 +56,7 @@ $(EMU_MK): $(TOP_V) | $(EMU_DEPS)
 $(EMU): $(EMU_MK)
 	$(MAKE) -C $(dir $(EMU_MK)) -f $(abspath $(EMU_MK))
 
-emu: $(EMU) | $(IMAGE_OBJ)
-	@echo $(IMAGE_OBJ)
+emu: $(EMU) $(IMAGE_OBJ)
 	$(EMU) -i $(IMAGE_OBJ)
 
 clean:

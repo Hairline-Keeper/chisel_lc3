@@ -30,7 +30,7 @@ class Regfile extends Module{
   val R3 = regfile(3);
   val R4 = regfile(4);
   val wenLatch = RegNext(io.wen)
-  when(wenLatch) {
-    printf("R1=%d,R2=%d,R3=%d,R4=%d\n", R1, R2, R3, R4)
-  }
+  // when(wenLatch) {
+  //   printf("R1=%d,R2=%d,R3=%d,R4=%d\n", R1, R2, R3, R4)
+  // }
 }
