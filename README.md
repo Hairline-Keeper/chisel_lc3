@@ -1,7 +1,5 @@
 # Chisel_LC3
 
----
-
 This repo is a LC3 ISA implemented using Chisel. Used in the teaching of computer system courses in Shenzhen University
 
 ## Dependencies
