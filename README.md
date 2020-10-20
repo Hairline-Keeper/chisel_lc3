@@ -1,6 +1,8 @@
 Chisel Project Template
 =======================
 
+# Chisel_LC3
+
 You've done the Chisel [tutorials](https://github.com/ucb-bar/chisel-tutorial), and now you 
 are ready to start your own chisel project.  The following procedure should get you started
 with a clean running [Chisel3](https://github.com/freechipsproject/chisel3) project.
