@@ -22,7 +22,7 @@ Here are some important directories under the project
 
 **image**: The **.asm** files that need to be run are stored in this directory
 
-**src**: Source code
+**src**:   Source code
 
 ## Build
 
