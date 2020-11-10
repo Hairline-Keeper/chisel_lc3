@@ -47,6 +47,7 @@ VERILATOR_FLAGS = --top-module $(SIM_TOP) \
 	-I$(abspath $(BUILD_DIR)) \
 	-CFLAGS "$(EMU_CXXFLAGS)" \
 	-LDFLAGS "$(EMU_LDFLAGS)" \
+	-Wno-WIDTH\
 	--trace
 
 $(EMU_MK): $(TOP_V) | $(EMU_DEPS)
