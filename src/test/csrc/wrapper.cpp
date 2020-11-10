@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
     // int count = 0;
 
-    init_ram(image);
+    // init_ram(image);
     // init_keyboard();
 
     while(!Verilated::gotFinish() && (sim_time == 0 || main_time < sim_time))
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         top->eval();            // 仿真时间步进
         tfp->dump(main_time);   // 波形文件写入步进
         // count++;
-        polling_keyboard(); // 轮询检测键盘
+        // polling_keyboard(); // 轮询检测键盘
         main_time++;
     }
     
