@@ -17,6 +17,8 @@ class DataPath extends Module {
     val signal = Input(new signalEntry)
     val mem = Flipped(new MemIO)
     val out = new FeedBack
+
+    val initPC = Input(UInt(16.W))
   })
 
   val SIG = io.signal
@@ -37,7 +39,7 @@ class DataPath extends Module {
   val Z = RegInit(true.B)
 
 
-  val PC  = Reg(UInt(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+  val PC  = RegInit(io.initPC) 
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
@@ -78,8 +80,8 @@ class DataPath extends Module {
 
   val addrOut = ADDR1MUX + ADDR2MUX
 
-  val PCMUX = MuxLookup(SIG.PC_MUX, 0x3000.U, Seq(
-    0.U -> Mux(PC===0.U && time===0.U, 0x3000.U,  PC + 1.U),
+  val PCMUX = MuxLookup(SIG.PC_MUX, io.initPC, Seq(
+    0.U -> (PC + 1.U),//Mux(PC===0.U, io.initPC,  PC + 1.U),
     1.U -> BUSOUT,
     2.U -> addrOut
   ))
@@ -152,8 +154,8 @@ class DataPath extends Module {
   dontTouch(in_mux)
   dontTouch(mem_en)
 
-  io.mem.rIdx   := MAR
-  io.mem.wIdx   := MAR
+  io.mem.raddr   := MAR
+  io.mem.waddr   := MAR
   io.mem.wdata  := MDR
   io.mem.wen    := MEM_EN
 
