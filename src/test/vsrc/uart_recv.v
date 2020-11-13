@@ -9,7 +9,7 @@ module UartRecv(
      
 //parameter define 
 parameter  CLK_FREQ = 50000000;                //系统时钟频率 
-parameter  UART_BPS = 9600;                    //串口波特率 
+parameter  UART_BPS = 115200;                    //串口波特率 
 localparam  BPS_CNT  = CLK_FREQ/UART_BPS;       //为得到指定波特率， 
                                                 //需要对系统时钟计数BPS_CNT 次 
 //reg define 
@@ -31,7 +31,7 @@ assign  start_flag = uart_rxd_d1 & (~uart_rxd_d0);
  
 //对UART接收端口的数据延迟两个时钟周期 
 always @(posedge sys_clk or negedge sys_rst_n) begin  
-    if (!sys_rst_n) begin  
+    if (sys_rst_n) begin  
         uart_rxd_d0 <= 1'b0; 
         uart_rxd_d1 <= 1'b0;           
     end 
@@ -43,7 +43,7 @@ end
  
 //当脉冲信号start_flag到达时，进入接收过程            
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n)                                   
+    if (sys_rst_n)                                   
         rx_flag <= 1'b0; 
     else begin 
         if(start_flag)                          //检测到起始位 
@@ -58,7 +58,7 @@ end
  
 //进入接收过程后，启动系统时钟计数器 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n)                              
+    if (sys_rst_n)                              
         clk_cnt <= 16'd0;                                   
     else if ( rx_flag ) begin                   //处于接收过程 
         if (clk_cnt < BPS_CNT - 1) 
@@ -72,7 +72,7 @@ end
  
 //进入接收过程后，启动接收数据计数器 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n)                              
+    if (sys_rst_n)                              
         rx_cnt  <= 4'd0; 
     else if ( rx_flag ) begin                   //处于接收过程 
         if (clk_cnt == BPS_CNT - 1)             //对系统时钟计数达一个波特率周期 
@@ -86,7 +86,7 @@ end
  
 //根据接收数据计数器来寄存 uart接收端口数据 
 always @(posedge sys_clk or negedge sys_rst_n) begin  
-    if ( !sys_rst_n)   
+    if ( sys_rst_n)   
         rxdata <= 8'd0;                                      
     else if(rx_flag)                            //系统处于接收过程 
         if (clk_cnt == BPS_CNT/2) begin         //判断系统时钟计数器计数到数据位中间 
@@ -110,7 +110,7 @@ end
  
 //数据接收完毕后给出标志信号并寄存输出接收到的数据 
 always @(posedge sys_clk or negedge sys_rst_n) begin         
-    if (!sys_rst_n) begin 
+    if (sys_rst_n) begin 
         uart_data <= 8'd0;
         uart_done <= 1'b0; 
     end 

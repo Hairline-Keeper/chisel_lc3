@@ -17,6 +17,8 @@ class DataPath extends Module {
     val signal = Input(new signalEntry)
     val mem = Flipped(new MemIO)
     val out = new FeedBack
+
+    val uartRx = Flipped(DecoupledIO(UInt(8.W)))
   })
 
   val SIG = io.signal
@@ -135,11 +137,20 @@ class DataPath extends Module {
   // address control logic that convered by truth table
   val MEM_EN = SIG.MIO_EN && SIG.R_W
   val IN_MUX = MuxCase(io.mem.rdata, Array(
-    (MEM_EN && (MAR === 0xfe00.U)) -> io.mem.rdata,//KBSR,
-    (MEM_EN && (MAR === 0xfe02.U)) -> io.mem.rdata,//KBDR,
+    (MEM_EN && (MAR === 0xfe00.U)) -> KBSR,//KBSR,
+    (MEM_EN && (MAR === 0xfe02.U)) -> KBDR,//KBDR,
     (MEM_EN && (MAR === 0xfe04.U)) -> io.mem.rdata,//DSR,
     (MEM_EN && (MAR < 0xfe00.U)) -> io.mem.rdata
     ))
+
+  // UART Input
+  io.uartRx.ready := !KBSR(15).asBool
+  // printf(p"io.uartRx.ready=${io.uartRx.ready}\n")
+  when(io.uartRx.fire) {
+    // printf(p"Send: ${io.uartRx.bits}\n")
+    KBDR := Cat(0.U(8.W), io.uartRx.bits)
+    KBSR := Cat(1.U(1.W), 0.U(15.W))
+  }
 
   val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
   val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W

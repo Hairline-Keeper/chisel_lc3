@@ -27,7 +27,7 @@ assign recv_done_flag = (~recv_done_d1) & recv_done_d0;
                                                   
 //对发送使能信号recv_done 延迟两个时钟周期 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n) begin 
+    if (sys_rst_n) begin 
         recv_done_d0 <= 1'b0;                                   
         recv_done_d1 <= 1'b0; 
     end                                                       
@@ -39,7 +39,7 @@ end
  
 //判断接收完成信号，并在串口发送模块空闲时给出发送使能信号 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n) begin 
+    if (sys_rst_n) begin 
         tx_ready  <= 1'b0;  
         send_en   <= 1'b0; 
         send_data <= 8'd0; 

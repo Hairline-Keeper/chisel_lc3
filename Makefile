@@ -17,6 +17,7 @@ IMAGE_DEPS := $(IMAGE_DIR)/$(IMAGE).asm
 $(TOP_V): $(SCALA_FILE)
 	@mkdir -p $(@D)
 	mill chisel_lc3.run LC3.Top.SimMain -td $(@D) --output-file $(@F)
+	# @sed -i -e 's/if (reset) begin/if (!reset) begin/g' $@
 	# sbt run chisel_lc3.LC3.Top.SimMain
 
 verilog: $(TOP_V)
