@@ -168,7 +168,7 @@ class DataPath extends Module {
   io.mem.rIdx   := MAR
   io.mem.wIdx   := MAR
   io.mem.wdata  := MDR
-  io.mem.wen    := MEM_EN
+  io.mem.wen    := SIG.MIO_EN && SIG.R_W
 
   //*************
   //  SimpleBus
