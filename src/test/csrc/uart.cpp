@@ -10,8 +10,6 @@
 static char str[KEY_QUEUE_LEN];
 static int str_len;
 
-static int clk = 0;
-
 static char buffer[BUFFERSIZE];
 static int head = 0, tail = 0, size = 0;
 
@@ -40,7 +38,7 @@ extern "C" void uart_helper(uint8_t sendData, uint8_t sendData_valid, uint8_t *s
                             uint8_t *recvData, uint8_t *recvData_valid, uint8_t recvData_ready) {
     *sendData_ready = 1;
     if(sendData_valid) {
-        printf("%c", sendData);
+        printf("Get Uart output: %c\n", sendData);
     }
 
     if(get_str()) {
@@ -51,21 +49,20 @@ extern "C" void uart_helper(uint8_t sendData, uint8_t sendData_valid, uint8_t *s
                 tail = (tail + 1) % BUFFERSIZE;
                 size++;
             }
+            printf("head = %d tail = %d size = %d\n", head, tail, size);
         }
     }
 
     if(size > 0) {
         *recvData_valid = 1;
-        *recvData = buffer[head];
+        *recvData = buffer[head - 1];
     } else {
         *recvData_valid = 0;
-        *recvData = 0;
+        *recvData = buffer[head - 1];
     }
 
-    if(*recvData_valid && recvData_ready && clk == 0) {
+    if(*recvData_valid && recvData_ready) {
         head = (head + 1) % BUFFERSIZE;
         size--;
     }
-
-    clk = (clk + 1) % 10;
 }

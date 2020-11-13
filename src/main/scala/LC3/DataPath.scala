@@ -19,6 +19,7 @@ class DataPath extends Module {
     val out = new FeedBack
 
     val uartRx = Flipped(DecoupledIO(UInt(8.W)))
+    val uartTx = DecoupledIO(UInt(8.W))
   })
 
   val SIG = io.signal
@@ -141,15 +142,14 @@ class DataPath extends Module {
   val IN_MUX = MuxCase(io.mem.rdata, Array(
     (MEM_RD && (MAR === 0xfe00.U)) -> KBSR,
     (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
-    (MEM_RD && (MAR === 0xfe04.U)) -> io.mem.rdata, // DSR
+    (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
     (MEM_EN && !SIG.R_W) -> io.mem.rdata
     ))
 
   // UART Input
   io.uartRx.ready := !KBSR(15).asBool
-  // printf(p"io.uartRx.ready=${io.uartRx.ready}\n")
   when(io.uartRx.fire) {
-    // printf(p"Send: ${io.uartRx.bits}\n")
+    printf(p"Send: ${io.uartRx.bits}\n")
     KBDR := Cat(0.U(8.W), io.uartRx.bits)
     KBSR := Cat(1.U(1.W), 0.U(15.W))
   }
@@ -157,6 +157,13 @@ class DataPath extends Module {
   val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
   val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
   val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
+
+  // UART Output
+  // io.uartTx.valid := DSR(15).asBool
+
+  DSR := Cat(io.uartTx.ready, 0.U(15.W))
+  io.uartTx.valid := RegNext(LD_DDR)
+  io.uartTx.bits  := DDR(7, 0)
 
   val in_mux = Wire(UInt(16.W)) //  for debug
   val mem_en = Wire(UInt(16.W)) //  for debug

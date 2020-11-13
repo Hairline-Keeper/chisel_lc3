@@ -21,12 +21,13 @@ class Top extends Module{
     val uart = Module(new UARTHelper)
     uart.io.clk := clock
 
-    uart.io.sendData := 0.U
-    uart.io.sendData_valid := false.B
-
     dataPath.io.uartRx.bits  := uart.io.recvData
     dataPath.io.uartRx.valid := uart.io.recvData_valid
     uart.io.recvData_ready   := dataPath.io.uartRx.ready
+
+    uart.io.sendData := dataPath.io.uartTx.bits
+    uart.io.sendData_valid := dataPath.io.uartTx.valid
+    dataPath.io.uartTx.ready := uart.io.sendData_ready
 
     io.uart_txd := true.B
   }

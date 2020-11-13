@@ -7,6 +7,7 @@
 #define DSR  0xFE04
 
 #define KEYBOARD_SERVICE "./image/KEYBOARD_INPUT.trap"
+#define DIAPLAY_SERVICE "./image/DISPLAY.trap"
 
 static paddr_t ram[RAMSIZE];
 static long img_size = 0;
@@ -59,6 +60,7 @@ void init_ram(const char *img) {
 
     // Init trap service program
     load_image(KEYBOARD_SERVICE);
+    load_image(DIAPLAY_SERVICE);
 
     for(int i = 0; i < RAMSIZE; i++) {
         ram[i] = htons(ram[i]);
