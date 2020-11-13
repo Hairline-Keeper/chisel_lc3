@@ -17,6 +17,17 @@ class Top extends Module{
   if(CoreConfig.FPGAPlatform) {
     val uartRx = Module(new BufferedUartTX)
     val uartTx = Module(new UartTX)
+
+    uartRx.io.rxd := io.uart_rxd
+    io.uart_txd   := uartRx.io.txd
+
+    dataPath.io.uartRx.bits   := uartRx.io.channel.bits
+    dataPath.io.uartRx.valid  := uartRx.io.channel.valid
+    uartRx.io.channel.ready   := dataPath.io.uartRx.ready
+
+    uartTx.io.channel.bits    := dataPath.io.uartTx.bits
+    uartTx.io.channel.valid   := dataPath.io.uartTx.valid
+    dataPath.io.uartTx.ready  := uartTx.io.channel.ready
   } else {
     val uart = Module(new UARTHelper)
     uart.io.clk := clock

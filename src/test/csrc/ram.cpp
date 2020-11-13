@@ -8,8 +8,8 @@
 
 int TRAP_NUM = 3;
 char TRAP_DIR[][1024] = {
-    "./image/KEYBOARD_INPUT.trap",
-    "./image/DISPLAY.trap",
+    "./image/GETC.trap",
+    "./image/OUT.trap",
     "./image/PUTS.trap"
 };
 

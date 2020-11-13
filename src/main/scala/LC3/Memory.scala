@@ -1,6 +1,7 @@
 package LC3
 
 import chisel3._
+import chisel3.util.experimental._
 
 class RAMHelper() extends BlackBox {
   val io = IO(new Bundle {
@@ -42,6 +43,13 @@ class Memory extends Module {
     mem.io.wdata := io.wdata
     // mem.io.wmask := "b11".U
     mem.io.wen := io.wen
+
+    val meminit = Mem(1024, UInt(16.W))
+    loadMemoryFromFile(meminit, "/home/zjr/chisel_lc3/resource/init.txt")
+
+    // for (i <- 0 until 10) {
+      printf(p"${meminit.read(1.U)}\n")
+    // }
   }
   
   io.R := true.B
