@@ -15,11 +15,11 @@ class Top extends Module{
   val memory = Module(new Memory)
 
   if(CoreConfig.FPGAPlatform) {
-    val uartRx = Module(new BufferedUartTX)
-    val uartTx = Module(new UartTX)
+    val uartRx = Module(new UartRX)
+    val uartTx = Module(new BufferedUartTX)
 
     uartRx.io.rxd := io.uart_rxd
-    io.uart_txd   := uartRx.io.txd
+    io.uart_txd   := uartTx.io.txd
 
     dataPath.io.uartRx.bits   := uartRx.io.channel.bits
     dataPath.io.uartRx.valid  := uartRx.io.channel.valid
