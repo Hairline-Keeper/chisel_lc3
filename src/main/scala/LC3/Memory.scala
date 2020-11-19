@@ -3,22 +3,16 @@ package LC3
 import chisel3._
 
 class MemIO extends Bundle {
-  val raddr = Input(UInt(16.W))
-  val rdata = Output(UInt(16.W))
-  val waddr = Input(UInt(16.W))
-  val wdata = Input(UInt(16.W))
-  val wen = Input(Bool())
-  val R = Output(Bool())
+  val clka  = Input(Clock())
+  val ena   = Input(Bool())
+  val wea   = Input(Bool())
+  val addra = Input(UInt(16.W))
+  val dina  = Input(UInt(16.W))
+  val douta = Output(UInt(16.W))
 }
 
-class Memory extends Module {
+class Memory extends BlackBox {
   val io = IO(new MemIO)
 
-  val mem = Mem(1<<16, UInt(16.W))
-  
-  io.rdata := mem.read(io.raddr)
-  when(io.wen) {
-    mem.write(io.waddr, io.wdata)
-  }
-  io.R := true.B
+  //dontTouch(io)
 }

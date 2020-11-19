@@ -17,16 +17,17 @@ class Top extends Module {
 
   dataPath.io.signal <> controller.io.out
   dataPath.io.initPC := boot.io.initPC.bits
+  dataPath.io.initMem <> boot.io.initMem
 
   memory.io <> dataPath.io.mem
-  memory.io <> boot.io.initMem
+
 
   boot.io.uart_rxd := io.uart_rxd
   io.uart_txd := io.uart_rxd
 
-  dontTouch(controller.io)
-  dontTouch(dataPath.io)
-  dontTouch(memory.io)
+//  dontTouch(controller.io)
+//  dontTouch(dataPath.io)
+//  dontTouch(memory.io)
 }
 
 object SimMain extends App {

@@ -19,6 +19,7 @@ class DataPath extends Module {
     val out = new FeedBack
 
     val initPC = Input(UInt(16.W))
+    val initMem = Flipped(ValidIO(new MemIO))
   })
 
   val SIG = io.signal
@@ -140,28 +141,24 @@ class DataPath extends Module {
   val MEM_RD = SIG.MIO_EN && !SIG.R_W
   val MEM_EN = SIG.MIO_EN && (MAR < 0xfe00.U)
 
-  val IN_MUX = MuxCase(io.mem.rdata, Array(
+  val IN_MUX = MuxCase(io.mem.douta, Array(
     (MEM_RD && (MAR === 0xfe00.U)) -> KBSR,
     (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
-    (MEM_RD && (MAR === 0xfe04.U)) -> io.mem.rdata,
-    (MEM_EN && !SIG.R_W) -> io.mem.rdata
+    (MEM_RD && (MAR === 0xfe04.U)) -> io.mem.douta,
+    (MEM_EN && !SIG.R_W) -> io.mem.douta
     ))
 
   val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
   val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
   val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
 
-  val in_mux = Wire(UInt(16.W)) //  for debug
-  val mem_en = Wire(UInt(16.W)) //  for debug
-  in_mux:= IN_MUX
-  mem_en := MEM_EN
-  dontTouch(in_mux)
-  dontTouch(mem_en)
+  io.mem.clka   := clock
+  io.mem.ena    := true.B
+  io.mem.wea    := Mux(io.initMem.valid, io.initMem.bits.wea, MEM_EN)
+  io.mem.addra  := Mux(io.initMem.valid, io.initMem.bits.wea, MAR)
+  io.mem.dina   := Mux(io.initMem.valid, io.initMem.bits.wea, MDR)
 
-  io.mem.raddr   := MAR
-  io.mem.waddr   := MAR
-  io.mem.wdata  := MDR
-  io.mem.wen    := MEM_EN
+
 
   //*************
   //  SimpleBus
@@ -219,7 +216,7 @@ class DataPath extends Module {
   //OUT//
   io.out.sig  := DontCare
   io.out.int  := false.B
-  io.out.r    := io.mem.R
+  io.out.r    := true.B      //io.mem.R  use ture.B for bram IP
   io.out.ir   := IR(15, 12)
   io.out.ben  := BEN
   io.out.psr  := PSR(15)

@@ -9,7 +9,7 @@ class Boot extends Module {
 
     val work    = Output(Bool())
     val initPC  = ValidIO(UInt(16.W))
-    val initMem = Flipped(new MemIO)
+    val initMem = ValidIO(new MemIO)
   })
 
   val uartRecv = Module(new UartRecv)
@@ -47,9 +47,10 @@ class Boot extends Module {
   io.initPC.bits := fullData
 
   io.initMem <> DontCare
-  io.initMem.wen := (lc3State === initmem) && fullDond
-  io.initMem.wdata := fullData
-  io.initMem.waddr := memAddr
+  io.initMem.valid := (lc3State === initmem)
+  io.initMem.bits.wea := fullDond
+  io.initMem.bits.dina := fullData
+  io.initMem.bits.addra := memAddr
 
   io.work := (lc3State === work)
 }
