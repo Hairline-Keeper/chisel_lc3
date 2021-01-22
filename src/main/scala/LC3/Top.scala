@@ -4,11 +4,13 @@ import chisel3._
 import chisel3.util._
 
 object CoreConfig {
-  val FPGAPlatform = false
+  val FPGAPlatform = true
+  println("FPGAPlatform = " + FPGAPlatform)
 }
 
 class Top extends Module{
   val io = IO(new UARTBundle)
+  dontTouch(io)
 
   val controller = Module(new Controller)
   val dataPath = Module(new DataPath)

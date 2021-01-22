@@ -1,0 +1,6 @@
+.ORIG x3000
+START LEA R0, hello
+PUTS
+BRnzp START
+hello .STRINGZ "Hello!"
+.END
