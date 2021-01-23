@@ -15,6 +15,18 @@ class RAMHelper() extends BlackBox {
   })
 }
 
+class dual_mem extends BlackBox {
+  val io = IO(new Bundle {
+    val clka = Input(Clock())
+    val wea = Input(Bool())
+    val addra = Input(UInt(16.W))
+    val dina = Input(UInt(16.W))
+    val clkb = Input(Clock())
+    val addrb = Input(UInt(16.W))
+    val doutb = Output(UInt(16.W))
+  })
+}
+
 class MemIO extends Bundle {
   val rIdx = Input(UInt(16.W))
   val rdata = Output(UInt(16.W))
@@ -29,11 +41,19 @@ class Memory extends Module {
   val io = IO(new MemIO)
   
   if(CoreConfig.FPGAPlatform) {
-    val mem = Mem(65536, UInt(16.W))
-    io.rdata := mem.read(io.rIdx)
-    when(io.wen) {
-      mem.write(io.wIdx, io.wdata)
-    }
+    // val mem = Mem(65536, UInt(16.W))
+    // io.rdata := mem.read(io.rIdx)
+    // when(io.wen) {
+    //   mem.write(io.wIdx, io.wdata)
+    // }
+    val mem = Module(new dual_mem())
+    mem.io.clka   := clock
+    mem.io.wea    := io.wen
+    mem.io.addra  := io.wIdx
+    mem.io.dina   := io.wdata
+    mem.io.clkb   := clock
+    mem.io.addrb  := io.rIdx
+    io.rdata      := mem.io.doutb
   }else {
     val mem = Module(new RAMHelper())
     mem.io.clk := clock
