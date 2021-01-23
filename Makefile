@@ -7,7 +7,7 @@ TEST_FILE = $(shell find ./src/test/scala -name '*.scala')
 .DEFAULT_GOAL = verilog
 
 TRACE = 
-FPGA = true
+FPGA = false
 
 IMAGE ?= dummy
 IMAGE_DIR = ./image

@@ -27,6 +27,6 @@ sed -i -e "${s},${e}d" $1
 
 sed -i "${s} i\\
 \\
-\tdual_mem memory (\n\t\t .clka(memory_clock),\n\t\t .wea(memory_io_wen),\n\t\t .addra(memory_io_wIdx),\n\t\t .dina(memory_io_wdata),\n\t\t .clkb(memory_clock),\n\t\t .addrb(memory_io_rIdx),\n\t\t .doutb(memory_io_rdate)\n\t);\n\t\t" $1
+\tdual_mem memory (\n\t\t .clka(memory_clock),\n\t\t .wea(memory_io_wen),\n\t\t .addra(memory_io_wIdx),\n\t\t .dina(memory_io_wdata),\n\t\t .clkb(memory_clock),\n\t\t .addrb(memory_io_rIdx),\n\t\t .doutb(memory_io_rdata)\n\t);\n\t\t" $1
 
 echo "Replace Memory in $1"
