@@ -2,11 +2,11 @@
 
 ## 一、项目介绍
 
-Chisel_LC3项目设计用于计算机体系结构课程的进阶教学使用，项目使用chisel作为开发语言，实现了基于LC3指令集架构的简单处理器。
+Chisel_LC3项目设计用于计算机体系结构课程的进阶教学使用，项目使用Chisel作为开发语言，实现了基于LC3指令集架构的简单处理器。
 
 LC-3全称是[Little Computer 3](https://en.wikipedia.org/wiki/Little_Computer_3)，是一种用于教学的指令集，其特点就是结构简单，相比于x86这类复杂的指令集来说，更容易实现，又具有指令集基本的功能，能够编写较复杂的一些汇编程序。使用LC-3能够更好的将精力集中于处理器处理执行指令的流程中，而不是指令集本身。
 
-[Chisel](https://www.chisel-lang.org/)是一种硬件设计语言，是在[Scala](https://www.scala-lang.org/)语言中添加了硬件构造基元(Hardware Construction Primitives)，能够通过编译生成可综合的的Verilog代码，其相对于直接使用Verilog，chisel生成的电路能够更好的参数化，对象化，使其在编写的过程中能够更多的使用面向对象编程的思想。
+[Chisel](https://www.Chisel-lang.org/)是一种硬件设计语言，是在[Scala](https://www.scala-lang.org/)语言中添加了硬件构造基元(Hardware Construction Primitives)，能够通过编译生成可综合的的Verilog代码，其相对于直接使用Verilog，Chisel生成的电路能够更好的参数化，对象化，使其在编写的过程中能够更多的使用面向对象编程的思想。
 
 本项目中LC-3的实现是参考[计算机系统概论](https://book.douban.com/subject/2185076/)中的LC-3实现的，目前已能够在计算机上仿真运行，终端和异常控制部分暂时没有实现。
 
@@ -36,7 +36,7 @@ mill version
 
 **Verilator**
 
-[Verilator](https://www.veripool.org/wiki/verilator)是一个开源模拟器，能够将verilog代码转换为C++代码，在系统上进行仿真，模拟硬件运行时的情况。verilator的安装很简单，只需要使用apt工具下载安装即可。本项目使用的verilator版本为4.028
+[Verilator](https://www.veripool.org/wiki/verilator)是一个开源模拟器，能够将Verilog代码转换为C++代码，在系统上进行仿真，模拟硬件运行时的情况。verilator的安装很简单，只需要使用apt工具下载安装即可。本项目使用的verilator版本为4.028
 
 ```shell
 sudo apt install verilator
@@ -62,7 +62,7 @@ lc3as [asm file]
 
 ## 三、编译流程
 
-仿真运行的编译流程如下图所示，首先使用mill将chisel代码编译成verilog代码，再用verilator将verilog代码转换为C++代码，编译生成一个可执行文件，运行这个可执行文件即可模拟硬件运行的结果
+仿真运行的编译流程如下图所示，首先使用mill将Chisel代码编译成Verilog代码，再用verilator将Verilog代码转换为C++代码，编译生成一个可执行文件，运行这个可执行文件即可模拟硬件运行的结果
 
 ```
 +------------+    +-------------+    +---------+
@@ -126,15 +126,15 @@ ALU是最基本的模块，用于做数学计算以及算术计算，纯组合�
 
 **Controller**
 
-控制器(Controller)内部实现是一个状态机，通过生成不同的控制信号，配合DataPath中的选通逻辑，能够控制各个处理单元在“特定时刻”做“特定事情”，直至指令结束，在主流处理器中，是通过将不同的任务进行拆分，每个流水级做特定的任务，使用流水线的方式工作的，在LC-3中简化了这个逻辑，通过控制器给出不同的信号来决定DataPath这周期需要做的事情。相对的，不使用流水线的代价就是LC-3只有当一条指令执行完了之后，才能够执行下一条指令，执行效率低下。控制器的设计参照了计算机系统概论中的图C-2。在控制器中有一张信号表，通过状态机当前的状态来索引这张表，得到的就是数据通路中所有选通逻辑的值，通过状态机和这张表就能够控制数据通路在不同的状态下做不同的操作。这张表是在[开源项目](https://github.com/mdrush/LC3/blob/3026928d98d2535ae62f7fbe21aac3610cbca7c4/cs/controlstore)的基础上修改的。
+控制器(Controller)内部实现是一个状态机，通过生成不同的控制信号，配合DataPath中的选通逻辑，能够控制各个处理单元在“特定时刻”做“特定事情”，直至指令结束，在主流处理器中，是通过将不同的任务进行拆分，每个流水级做特定的任务，使用流水线的方式工作的，在LC-3中简化了这个逻辑，通过控制器给出不同的信号来决定DataPath这周期需要做的事情。相对的，不使用流水线的代价就是LC-3只有当一条指令执行完了之后，才能够执行下一条指令，执行效率低下。控制器的设计参照了计算机系统概论中的图C-2。在控制器中有一张信号表，通过状态机当前的状态来索引这张表，得到的就是数据通路中所有选通逻辑的值，通过状态机和这张表就能够控制数据通路在不同的状态下做不同的操作。这张表是在[开源项目](https://github.com/mdrush/LC3/blob/3026928d98d2535ae62f7fbe21aac3610cbca7c4/cs/controlstore)的基础上修改的。所有的选通逻辑信号参考了计算机系统概论附录C的表C-1 数据通路控制信号
 
 **Memory**
 
-内存(Memory)是处理器用来存储指令和数据的存储单元，在真实的电路实现中使用一个真正的RAM模块，连接上对应的信号即可，但是在仿真中我们需要使用DPI-C(Direct Programming Interface-C)，这个接口能够令verilog仿真中调用C语言中的函数，来实现一些特定的功能，在本项目中我们用来对Memory初始化，将需要运行的程序和一些TRAP程序初始化到Memory中指定的地址上。在有了相应的verilog模块后，在chisel代码中继承BlackBox基类，令这个verilog实现的模块可以在chisel中例化并调用
+内存(Memory)是处理器用来存储指令和数据的存储单元，在真实的电路实现中使用一个真正的RAM模块，连接上对应的信号即可，但是在仿真中我们需要使用DPI-C(Direct Programming Interface-C)，这个接口能够令Verilog仿真中调用C语言中的函数，来实现一些特定的功能，在本项目中我们用来对Memory初始化，将需要运行的程序和一些TRAP程序初始化到Memory中指定的地址上。在有了相应的Verilog模块后，在Chisel代码中继承BlackBox基类，令这个Verilog实现的模块可以在Chisel中例化并调用
 
 **Uart**
 
-一个处理器和外界交互最重要的就是输入和输出，而Uart是最常用的一种通信协议，项目使用的Uart模块是在开源项目[[1]](https://github.com/huangruidtu/chisel-uart)、[[2]](https://github.com/nyuichi/chisel-uart)的基础上修改的，这部分功能在仿真的时候也是使用DPI-C来模拟现实硬件中Uart的输入输出，在仿真运行时模拟Uart输入的C函数会定时检查在终端是否有键盘输入，如果有的话会将输入暂存到一个缓冲中，每次Uart只能将一个Byte的数据传给LC-3，并且只有当LC-3接收了这个数据后，才能够传送下一个数据；模拟Uart输出的C函数会定时的检查LC-3有没有需要输出的数据，如果有将其打印到终端，并告诉LC-3数据已经被接收，可以发送下一个数据。
+一个处理器和外界交互最重要的就是输入和输出，而Uart是最常用的一种通信协议，项目使用的Uart模块是在开源项目[[1]](https://github.com/huangruidtu/Chisel-uart)、[[2]](https://github.com/nyuichi/Chisel-uart)的基础上修改的，这部分功能在仿真的时候也是使用DPI-C来模拟现实硬件中Uart的输入输出，在仿真运行时模拟Uart输入的C函数会定时检查在终端是否有键盘输入，如果有的话会将输入暂存到一个缓冲中，每次Uart只能将一个Byte的数据传给LC-3，并且只有当LC-3接收了这个数据后，才能够传送下一个数据；模拟Uart输出的C函数会定时的检查LC-3有没有需要输出的数据，如果有将其打印到终端，并告诉LC-3数据已经被接收，可以发送下一个数据。
 
 ## 六、调试
 
