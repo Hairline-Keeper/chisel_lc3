@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 object CoreConfig {
-  val FPGAPlatform = true
+  val FPGAPlatform = false
   println("FPGAPlatform = " + FPGAPlatform)
 }
 

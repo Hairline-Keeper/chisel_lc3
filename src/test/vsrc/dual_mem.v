@@ -9,3 +9,4 @@ module dual_mem
   input   [`RAMWIDTH-1:0] addrb,
   output  [`RAMWIDTH-1:0] doutb
 );
+endmodule

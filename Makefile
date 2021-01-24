@@ -7,19 +7,12 @@ TEST_FILE = $(shell find ./src/test/scala -name '*.scala')
 .DEFAULT_GOAL = verilog
 
 TRACE = 
-FPGA = false
 
 IMAGE ?= dummy
 IMAGE_DIR = ./image
 LC3AS = $(IMAGE_DIR)/lc3as
 IMAGE_OBJ := $(IMAGE_DIR)/$(IMAGE).obj
 IMAGE_DEPS := $(IMAGE_DIR)/$(IMAGE).asm
-
-ifeq ($(FPGA), true)
-  REMOVE_MEM=@./tool/removeMem.sh $(TOP_V)
-else
-  REMOVE_MEM=
-endif
 
 $(TOP_V): $(SCALA_FILE)
 	@mkdir -p $(@D)

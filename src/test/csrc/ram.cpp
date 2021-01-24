@@ -106,7 +106,8 @@ int read_ram(int addr) {
 }
 
 extern "C" void ram_helper(paddr_t rIdx, paddr_t *rdata, paddr_t wIdx, paddr_t wdata, /*paddr_t wmask,*/ uint8_t wen) {
-    *rdata = ram[rIdx];
+    int rIdxReg = rIdx;
+    *rdata = ram[rIdxReg];
     if (wen) ram[wIdx] = wdata;
     //printf("[debug] rIdx=%4x, *rdata=%4x, wIdx=%4x, *wdata=%4x, wen=%x\n", rIdx,  *rdata, wIdx, wdata, wen);
 }
