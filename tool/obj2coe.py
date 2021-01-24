@@ -10,11 +10,11 @@ if (len(sys.argv) < 3):
 
 print("obj file: " + sys.argv[1])
 
-trapList = [
-  "./image/GETC.trap",
-  "./image/OUT.trap",
-  "./image/PUTS.trap"
-]
+trapList = {
+  "./image/GETC.trap": 0x0020,
+  "./image/OUT.trap": 0x0021,
+  "./image/PUTS.trap": 0x0022
+}
 
 writeData = {}
  
@@ -43,9 +43,10 @@ def readFromOBJ(filename):
 
 # Start
 # Load TRAP program
-for x in trapList:
+for x in trapList.keys():
   trap = readFromOBJ(x)
   addr = int(trap.pop(0), 16)
+  writeData[trapList[x]] = ['{:04X}'.format(addr)]
   writeData[addr] = trap
   print("Load TRAP program %s to 0x%x" % (x, addr))
 

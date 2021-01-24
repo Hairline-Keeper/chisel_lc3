@@ -40,9 +40,10 @@ class DataPath extends Module {
   val Z = RegInit(true.B)
 
 
-  val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+  val PC  = RegInit("h2fff".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
   val IR  = RegInit(0.U(16.W))
-  val MAR = RegInit(0.U(16.W))
+  val MAR = WireInit(0.U(16.W))
+  val MAR_REG = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
 
@@ -55,6 +56,7 @@ class DataPath extends Module {
   val BUSEN =  WireInit(false.B)
 
   /*********** IR Decode ****************/
+  // assert(IR =/= 0.U)
   val baseR = IR(8,6)
   val src2  = IR(2,0)
   val isImm = IR(5)
@@ -206,7 +208,12 @@ class DataPath extends Module {
   /*******
   *  LD
   ********/
-  when(SIG.LD_MAR) {  MAR := BUSOUT }
+  when(SIG.LD_MAR) {
+    MAR := BUSOUT
+    MAR_REG := BUSOUT
+  }.otherwise {
+    MAR := MAR_REG
+  }
 
   when(SIG.LD_MDR) {  MDR := Mux(SIG.MIO_EN, IN_MUX, BUSOUT) }
 
