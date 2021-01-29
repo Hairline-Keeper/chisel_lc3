@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
     // int count = 0;
 
-    // init_ram(image);
+    init_ram(image);
     // init_keyboard();
 
     while(!Verilated::gotFinish() && (sim_time == 0 || main_time < sim_time))

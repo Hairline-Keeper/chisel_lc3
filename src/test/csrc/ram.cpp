@@ -6,7 +6,12 @@
 #define KBSR 0xFE00
 #define DSR  0xFE04
 
-#define KEYBOARD_SERVICE "./image/KEYBOARD_INPUT.trap"
+int TRAP_NUM = 3;
+char TRAP_DIR[][1024] = {
+    "./image/GETC.trap",
+    "./image/OUT.trap",
+    "./image/PUTS.trap"
+};
 
 static paddr_t ram[RAMSIZE];
 static long img_size = 0;
@@ -52,13 +57,19 @@ void load_image(const char *img) {
     // display_ram(start_addr,img_size);
 }
 
+void load_trap() {
+    for(int i = 0; i < TRAP_NUM; i++) {
+        load_image(TRAP_DIR[i]);
+    }
+}
+
 void init_ram(const char *img) {
     printf("The image is %s\n", img);
 
     load_image(img);
 
     // Init trap service program
-    load_image(KEYBOARD_SERVICE);
+    load_trap();
 
     for(int i = 0; i < RAMSIZE; i++) {
         ram[i] = htons(ram[i]);
@@ -80,7 +91,7 @@ void init_ram(const char *img) {
 
     // FIXME: Only x3000-xffff can use store image
 
-    display_ram(KBSR,128);
+    // display_ram(KBSR,128);
 }
 
 void write_ram(int addr, int data) {
@@ -95,7 +106,8 @@ int read_ram(int addr) {
 }
 
 extern "C" void ram_helper(paddr_t rIdx, paddr_t *rdata, paddr_t wIdx, paddr_t wdata, /*paddr_t wmask,*/ uint8_t wen) {
-    *rdata = ram[rIdx];
+    int rIdxReg = rIdx;
+    *rdata = ram[rIdxReg];
     if (wen) ram[wIdx] = wdata;
     //printf("[debug] rIdx=%4x, *rdata=%4x, wIdx=%4x, *wdata=%4x, wen=%x\n", rIdx,  *rdata, wIdx, wdata, wen);
 }

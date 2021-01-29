@@ -10,7 +10,7 @@ module UartSend(
      
 //parameter define 
 parameter  CLK_FREQ = 50000000;            //系统时钟频率 
-parameter  UART_BPS = 9600;                //串口波特率 
+parameter  UART_BPS = 115200;                //串口波特率 
 localparam  BPS_CNT  = CLK_FREQ/UART_BPS;   //为得到指定波特率，对系统时钟计数BPS_CNT次 
  
 //reg define 
@@ -35,7 +35,7 @@ assign en_flag = (~uart_en_d1) & uart_en_d0;
  
 //对发送使能信号uart_en延迟两个时钟周期 
 always @(posedge sys_clk or negedge sys_rst_n) begin
-    if (!sys_rst_n) begin 
+    if (sys_rst_n) begin 
         uart_en_d0 <= 1'b0;                                   
         uart_en_d1 <= 1'b0; 
     end                                                       
@@ -47,7 +47,7 @@ end
  
 //当脉冲信号en_flag到达时,寄存待发送的数据，并进入发送过程           
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n) begin                                   
+    if (sys_rst_n) begin                                   
         tx_flag <= 1'b0; 
         tx_data <= 8'd0; 
     end  
@@ -68,7 +68,7 @@ end
  
 //进入发送过程后，启动系统时钟计数器 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n)                              
+    if (sys_rst_n)                              
         clk_cnt <= 16'd0;                                   
     else if (tx_flag) begin                 //处于发送过程 
         if (clk_cnt < BPS_CNT - 1) 
@@ -82,7 +82,7 @@ end
  
 //进入发送过程后，启动发送数据计数器 
 always @(posedge sys_clk or negedge sys_rst_n) begin          
-    if (!sys_rst_n)                              
+    if (sys_rst_n)                              
         tx_cnt <= 4'd0; 
     else if (tx_flag) begin                 //处于发送过程 
         if (clk_cnt == BPS_CNT - 1)         //对系统时钟计数达一个波特率周期 
@@ -96,7 +96,7 @@ end
  
 //根据发送数据计数器来给 uart发送端口赋值 
 always @(posedge sys_clk or negedge sys_rst_n) begin         
-    if (!sys_rst_n)   
+    if (sys_rst_n)   
         uart_txd <= 1'b1;         
     else if (tx_flag) 
         case(tx_cnt) 

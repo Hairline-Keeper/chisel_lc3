@@ -19,6 +19,8 @@ class DataPath extends Module {
     val out = new FeedBack
 
     val initPC = Input(UInt(16.W))
+    val uartRx = Flipped(DecoupledIO(UInt(8.W)))
+    val uartTx = DecoupledIO(UInt(8.W))
   })
 
   val SIG = io.signal
@@ -39,9 +41,11 @@ class DataPath extends Module {
   val Z = RegInit(true.B)
 
 
-  val PC  = RegInit(io.initPC) 
+  // val PC  = RegInit(io.initPC) 
+  val PC  = RegInit("h2fff".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
   val IR  = RegInit(0.U(16.W))
-  val MAR = RegInit(0.U(16.W))
+  val MAR = WireInit(0.U(16.W))
+  val MAR_REG = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
 
@@ -54,6 +58,7 @@ class DataPath extends Module {
   val BUSEN =  WireInit(false.B)
 
   /*********** IR Decode ****************/
+  // assert(IR =/= 0.U)
   val baseR = IR(8,6)
   val src2  = IR(2,0)
   val isImm = IR(5)
@@ -143,13 +148,28 @@ class DataPath extends Module {
   val IN_MUX = MuxCase(io.mem.rdata, Array(
     (MEM_RD && (MAR === 0xfe00.U)) -> KBSR,
     (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
-    (MEM_RD && (MAR === 0xfe04.U)) -> io.mem.rdata,
+    (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
     (MEM_EN && !SIG.R_W) -> io.mem.rdata
     ))
+
+  // UART Input
+  io.uartRx.ready := !KBSR(15).asBool
+  when(io.uartRx.fire) {
+    printf(p"Send: ${io.uartRx.bits}\n")
+    KBDR := Cat(0.U(8.W), io.uartRx.bits)
+    KBSR := Cat(1.U(1.W), 0.U(15.W))
+  }
 
   val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
   val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
   val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
+
+  // UART Output
+  // io.uartTx.valid := DSR(15).asBool
+
+  DSR := Cat(io.uartTx.ready, 0.U(15.W))
+  io.uartTx.valid := RegNext(LD_DDR)
+  io.uartTx.bits  := DDR(7, 0)
 
   val in_mux = Wire(UInt(16.W)) //  for debug
   val mem_en = Wire(UInt(16.W)) //  for debug
@@ -161,7 +181,7 @@ class DataPath extends Module {
   io.mem.raddr   := MAR
   io.mem.waddr   := MAR
   io.mem.wdata  := MDR
-  io.mem.wen    := MEM_EN
+  io.mem.wen    := SIG.MIO_EN && SIG.R_W
 
   //*************
   //  SimpleBus
@@ -192,7 +212,12 @@ class DataPath extends Module {
   /*******
   *  LD
   ********/
-  when(SIG.LD_MAR) {  MAR := BUSOUT }
+  when(SIG.LD_MAR) {
+    MAR := BUSOUT
+    MAR_REG := BUSOUT
+  }.otherwise {
+    MAR := MAR_REG
+  }
 
   when(SIG.LD_MDR) {  MDR := Mux(SIG.MIO_EN, IN_MUX, BUSOUT) }
 
