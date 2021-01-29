@@ -8,11 +8,11 @@ object CoreConfig {
   println("FPGAPlatform = " + FPGAPlatform)
 }
 
-  val boot = Module(new Boot)
 class Top extends Module{
   val io = IO(new UARTBundle)
   dontTouch(io)
 
+  val boot = Module(new Boot)
   val controller = Module(new Controller)
   val dataPath = Module(new DataPath)
   val memory = Module(new Memory)
@@ -24,13 +24,19 @@ class Top extends Module{
     uartRx.io.rxd := io.uart_rxd
     io.uart_txd   := uartTx.io.txd
 
-    dataPath.io.uartRx.bits   := uartRx.io.channel.bits
-    dataPath.io.uartRx.valid  := uartRx.io.channel.valid
-    uartRx.io.channel.ready   := dataPath.io.uartRx.ready
+    dataPath.io.uartRx <> uartRx.io.channel
+    uartTx.io.channel <> dataPath.io.uartTx
 
-    uartTx.io.channel.bits    := dataPath.io.uartTx.bits
-    uartTx.io.channel.valid   := dataPath.io.uartTx.valid
-    dataPath.io.uartTx.ready  := uartTx.io.channel.ready
+    // dataPath.io.uartRx.bits   := uartRx.io.channel.bits
+    // dataPath.io.uartRx.valid  := uartRx.io.channel.valid
+    // uartRx.io.channel.ready   := dataPath.io.uartRx.ready
+
+    // uartTx.io.channel.bits    := dataPath.io.uartTx.bits
+    // uartTx.io.channel.valid   := dataPath.io.uartTx.valid
+    // dataPath.io.uartTx.ready  := uartTx.io.channel.ready
+
+    boot.io.uart_rxd.valid := uartRx.io.channel.valid
+    boot.io.uart_rxd.bits := uartRx.io.channel.bits
   } else {
     val uart = Module(new UARTHelper)
     uart.io.clk := clock
@@ -44,6 +50,9 @@ class Top extends Module{
     dataPath.io.uartTx.ready := uart.io.sendData_ready
 
     io.uart_txd := true.B
+
+    boot.io.uart_rxd.valid := false.B
+    boot.io.uart_rxd.bits := DontCare
   }
 
   controller.io.in <> dataPath.io.out
@@ -53,14 +62,18 @@ class Top extends Module{
   dataPath.io.initPC := boot.io.initPC.bits
 
   memory.io <> dataPath.io.mem
-  memory.io <> boot.io.initMem
+  memory.io.waddr := Mux(boot.io.work, dataPath.io.mem.waddr, boot.io.initMem.waddr)
+  memory.io.wdata := Mux(boot.io.work, dataPath.io.mem.wdata, boot.io.initMem.wdata)
+  memory.io.wen := Mux(boot.io.work, dataPath.io.mem.wen, boot.io.initMem.wen)
 
-  boot.io.uart_rxd := io.uart_rxd
   io.uart_txd := io.uart_rxd
+  boot.io.initMem.rdata := DontCare
+  boot.io.initMem.R := DontCare
 
   dontTouch(controller.io)
   dontTouch(dataPath.io)
   dontTouch(memory.io)
+  dontTouch(boot.io)
 }
 
 object SimMain extends App {

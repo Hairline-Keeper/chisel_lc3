@@ -50,17 +50,17 @@ class Memory extends Module {
     val mem = Module(new dual_mem())
     mem.io.clka   := clock
     mem.io.wea    := io.wen
-    mem.io.addra  := io.wIdx
+    mem.io.addra  := io.waddr
     mem.io.dina   := io.wdata
     mem.io.clkb   := clock
-    mem.io.addrb  := io.rIdx
+    mem.io.addrb  := io.raddr
     io.rdata      := mem.io.doutb
   }else {
     val mem = Module(new RAMHelper())
     mem.io.clk := clock
-    mem.io.rIdx := io.rIdx
+    mem.io.rIdx := io.raddr
     io.rdata := mem.io.rdata
-    mem.io.wIdx := io.wIdx
+    mem.io.wIdx := io.waddr
     mem.io.wdata := io.wdata
     // mem.io.wmask := "b11".U
     mem.io.wen := io.wen
