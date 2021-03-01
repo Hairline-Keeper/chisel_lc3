@@ -5,17 +5,19 @@ import chisel3.util._
 
 class Boot extends Module with HasUartCst{
   val io = IO(new Bundle() {
-    val uart_rxd = Flipped(ValidIO(UInt(8.W)))
+    val uartRx = Flipped(DecoupledIO(UInt(8.W)))
 
     val work    = Output(Bool())
     val initPC  = ValidIO(UInt(16.W))
     val initMem = Flipped(new MemIO)
   })
 
-  val uartDone = io.uart_rxd.valid
-  val uartData = io.uart_rxd.bits
+  val uartDone = io.uartRx.valid
+  val uartData = io.uartRx.bits
+  io.uartRx.ready := true.B
 
   val outTimeCnt = RegInit(0.U(log2Up((frequency/baudRate) - 1).W))
+  val inTransStart = RegInit(false.B)
 
   when(uartDone) {
     outTimeCnt := 0.U
@@ -23,8 +25,12 @@ class Boot extends Module with HasUartCst{
     outTimeCnt := outTimeCnt + 1.U
   }
 
-  def isOutTime(cnt: UInt): Bool = {
-    cnt > ((frequency/baudRate) - 1).U
+  when(uartDone && !inTransStart) { inTransStart := true.B }
+
+  def isOutTime(cnt: UInt, inTransStart: Bool): Bool = {
+    Mux(inTransStart,
+      cnt > ((frequency/baudRate) - 1).U,
+      false.B)
   }
 
   val initpc :: initmem :: work :: Nil = Enum(3)
@@ -41,12 +47,11 @@ class Boot extends Module with HasUartCst{
 
   when(lc3State === initpc && fullDone){
     memAddr := fullData
-    lc3State := initmem
-  }
+    lc3State := initmem  }
 
   when(lc3State === initmem && fullDone){
     memAddr := memAddr + 1.U
-    when(isOutTime(outTimeCnt)){
+    when(isOutTime(outTimeCnt, inTransStart)){
       lc3State := work
     }
   }
@@ -57,7 +62,7 @@ class Boot extends Module with HasUartCst{
 
     io.initMem <> DontCare
     io.initMem.wen := (lc3State === initmem) && fullDone
-    io.initMem.wdata := fullData
+    io.initMem.wdata := fullData 
     io.initMem.waddr := memAddr
 
     io.work := (lc3State === work)
