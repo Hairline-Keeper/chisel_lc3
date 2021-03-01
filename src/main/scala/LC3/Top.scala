@@ -23,8 +23,17 @@ class Top extends Module{
 
     uartRx.io.rxd := io.uart_rxd
     io.uart_txd   := uartTx.io.txd
+    
+    when(boot.io.work) {
+      dataPath.io.uartRx <> uartRx.io.channel
+      boot.io.uartRx <> DontCare
+      boot.io.uartRx.valid := false.B
+    }.otherwise {
+      dataPath.io.uartRx <> DontCare
+      dataPath.io.uartRx.valid := false.B
+      boot.io.uartRx <> uartRx.io.channel
+    }
 
-    dataPath.io.uartRx <> uartRx.io.channel
     uartTx.io.channel <> dataPath.io.uartTx
 
     // dataPath.io.uartRx.bits   := uartRx.io.channel.bits
@@ -35,8 +44,8 @@ class Top extends Module{
     // uartTx.io.channel.valid   := dataPath.io.uartTx.valid
     // dataPath.io.uartTx.ready  := uartTx.io.channel.ready
 
-    boot.io.uart_rxd.valid := uartRx.io.channel.valid
-    boot.io.uart_rxd.bits := uartRx.io.channel.bits
+    // boot.io.uartRx.valid := uartRx.io.channel.valid
+    // boot.io.uartRx.bits := uartRx.io.channel.bits
   } else {
     val uart = Module(new UARTHelper)
     uart.io.clk := clock
@@ -51,8 +60,8 @@ class Top extends Module{
 
     io.uart_txd := true.B
 
-    boot.io.uart_rxd.valid := false.B
-    boot.io.uart_rxd.bits := DontCare
+    boot.io.uartRx.valid := false.B
+    boot.io.uartRx.bits := DontCare
   }
 
   controller.io.in <> dataPath.io.out
@@ -66,7 +75,7 @@ class Top extends Module{
   memory.io.wdata := Mux(boot.io.work, dataPath.io.mem.wdata, boot.io.initMem.wdata)
   memory.io.wen := Mux(boot.io.work, dataPath.io.mem.wen, boot.io.initMem.wen)
 
-  io.uart_txd := io.uart_rxd
+  // io.uart_txd := io.uart_rxd
   boot.io.initMem.rdata := DontCare
   boot.io.initMem.R := DontCare
 
