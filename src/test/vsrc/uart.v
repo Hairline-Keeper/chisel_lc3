@@ -26,3 +26,35 @@ module UARTHelper(
     uart_helper(sendData, sendData_valid, sendData_ready, recvData, recvData_valid, recvData_ready);
   end
 endmodule
+
+import "DPI-C" function void soc_uartRx_helper
+(
+  input bit rxd
+);
+
+module SOC_UartRx(
+  input clk,
+
+  input bit rxd
+);
+
+  always @(posedge clk) begin
+    soc_uartRx_helper(rxd);
+  end
+endmodule
+
+import "DPI-C" function void soc_uartTx_helper
+(
+  output bit txd
+);
+
+module SOC_UartTx(
+  input clk,
+
+  output txd
+);
+
+  always @(posedge clk) begin
+    soc_uartTx_helper(txd);
+  end
+endmodule

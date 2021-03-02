@@ -27,6 +27,20 @@ class UARTHelper extends BlackBox {
   })
 }
 
+class SOC_UartRx extends BlackBox {
+  val io = IO(new Bundle {
+    val clk = Input(Clock())
+    val rxd = Input(Bool())
+  })
+}
+
+class SOC_UartTx extends BlackBox {
+  val io = IO(new Bundle {
+    val clk = Input(Clock())
+    val txd = Output(Bool())
+  })
+}
+
 class UartTX extends Module with HasUartCst {
   val io = IO(new Bundle {
     val txd = Output(Bool())

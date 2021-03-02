@@ -35,40 +35,41 @@ class Top extends Module{
     }
 
     uartTx.io.channel <> dataPath.io.uartTx
-
-    // dataPath.io.uartRx.bits   := uartRx.io.channel.bits
-    // dataPath.io.uartRx.valid  := uartRx.io.channel.valid
-    // uartRx.io.channel.ready   := dataPath.io.uartRx.ready
-
-    // uartTx.io.channel.bits    := dataPath.io.uartTx.bits
-    // uartTx.io.channel.valid   := dataPath.io.uartTx.valid
-    // dataPath.io.uartTx.ready  := uartTx.io.channel.ready
-
-    // boot.io.uartRx.valid := uartRx.io.channel.valid
-    // boot.io.uartRx.bits := uartRx.io.channel.bits
   } else {
-    val uart = Module(new UARTHelper)
-    uart.io.clk := clock
-
-    dataPath.io.uartRx.bits  := uart.io.recvData
-    dataPath.io.uartRx.valid := uart.io.recvData_valid
-    uart.io.recvData_ready   := dataPath.io.uartRx.ready
-
-    uart.io.sendData := dataPath.io.uartTx.bits
-    uart.io.sendData_valid := dataPath.io.uartTx.valid
-    dataPath.io.uartTx.ready := uart.io.sendData_ready
-
     io.uart_txd := true.B
 
-    boot.io.uartRx.valid := false.B
-    boot.io.uartRx.bits := DontCare
+    val uartRx = Module(new UartRX)
+    val uartTx = Module(new BufferedUartTX)
+    
+    val soc_uartTx = Module(new SOC_UartTx)
+    val soc_uartRx = Module(new SOC_UartRx)
+    
+    soc_uartTx.io.clk := clock
+    soc_uartRx.io.clk := clock
+
+    uartRx.io.rxd := soc_uartTx.io.txd
+    soc_uartRx.io.rxd := uartTx.io.txd
+    
+    // printf(p"${soc_uartTx.io.txd}")
+    
+    when(boot.io.work) {
+      dataPath.io.uartRx <> uartRx.io.channel
+      boot.io.uartRx <> DontCare
+      boot.io.uartRx.valid := false.B
+    }.otherwise {
+      dataPath.io.uartRx <> DontCare
+      dataPath.io.uartRx.valid := false.B
+      boot.io.uartRx <> uartRx.io.channel
+    }
+
+    uartTx.io.channel <> dataPath.io.uartTx
   }
 
   controller.io.in <> dataPath.io.out
   controller.io.work := boot.io.work
 
   dataPath.io.signal <> controller.io.out
-  dataPath.io.initPC := boot.io.initPC.bits
+  dataPath.io.initPC <> boot.io.initPC
 
   memory.io <> dataPath.io.mem
   memory.io.waddr := Mux(boot.io.work, dataPath.io.mem.waddr, boot.io.initMem.waddr)

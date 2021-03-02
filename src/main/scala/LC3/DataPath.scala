@@ -18,7 +18,7 @@ class DataPath extends Module {
     val mem = Flipped(new MemIO)
     val out = new FeedBack
 
-    val initPC = Input(UInt(16.W))
+    val initPC = Flipped(ValidIO(Input(UInt(16.W))))
     val uartRx = Flipped(DecoupledIO(UInt(8.W)))
     val uartTx = DecoupledIO(UInt(8.W))
   })
@@ -41,8 +41,12 @@ class DataPath extends Module {
   val Z = RegInit(true.B)
 
 
-  val PC  = RegInit(io.initPC)
-  // val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+  val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
+  val RESET_PC  = RegInit("h3000".U(16.W))
+  when(io.initPC.valid) {
+    PC := io.initPC.bits
+    RESET_PC := io.initPC.bits
+  }
   val IR  = RegInit(0.U(16.W))
   val MAR = WireInit(0.U(16.W))
   val MAR_REG = RegInit(0.U(16.W))
@@ -85,8 +89,8 @@ class DataPath extends Module {
 
   val addrOut = ADDR1MUX + ADDR2MUX
 
-  val PCMUX = MuxLookup(SIG.PC_MUX, io.initPC, Seq(
-    0.U -> Mux(PC===0.U, io.initPC,  PC + 1.U),
+  val PCMUX = MuxLookup(SIG.PC_MUX, RESET_PC, Seq(
+    0.U -> Mux(PC===0.U, RESET_PC,  PC + 1.U),
     1.U -> BUSOUT,
     2.U -> addrOut
   ))
