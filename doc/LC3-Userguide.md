@@ -200,7 +200,7 @@ TopMain.v文件会生成在chisel_lc3/build目录下
 
 ### 7.3 创建Vivado工程
 
-![image-20210303152040601](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303152040601.png)
+![image-20210303152040601](./img/image-20210303152040601.png)
 
 切记选择正确的板卡型号
 
@@ -210,7 +210,7 @@ TopMain.v文件会生成在chisel_lc3/build目录下
 
 将TomMain.v文件添加到项目中
 
-![image-20210303152230795](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303152230795.png)
+![image-20210303152230795](./img/image-20210303152230795.png)
 
 创建新的约束文件，写入以下内容。约束文件声明了全局时钟，复位信号，以及绑定Uart的接口。
 
@@ -235,69 +235,69 @@ TopMain.v文件添加完后，应该能够看到Memory模块下的双端口RAM�
 
 在Vivado 软件的左侧“Flow Navigator”栏中单击“IP Catalog”，如下图所示。
 
-![image-20210303153901451](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303153901451.png)
+![image-20210303153901451](./img/image-20210303153901451.png)
 
 然后在弹出的窗口中搜索Block Memory Generator，图中两个结果是同一个IP核，双击选第一个即可
 
-![image-20210303153942646](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303153942646.png)
+![image-20210303153942646](./img/image-20210303153942646.png)
 
 在弹出的配置窗口中按照下图配置
 
-![image-20210303154417304](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154417304.png)
+![image-20210303154417304](./img/image-20210303154417304.png)
 
-![image-20210303154427675](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154427675.png)
+![image-20210303154427675](./img/image-20210303154427675.png)
 
-![image-20210303155523529](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303155523529.png)
+![image-20210303155523529](./img/image-20210303155523529.png)
 
-![image-20210303155755664](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303155755664.png)
+![image-20210303155755664](./img/image-20210303155755664.png)
 
 其中的init.coe文件是RAM的初始化文件。文件中包含了LC3中的TRAP程序，该文件在chisel_lc3目录下能够找到
 
-![image-20210303154501999](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154501999.png)
+![image-20210303154501999](./img/image-20210303154501999.png)
 
 点击Generate后，在Source面板的IP Sources标签页下会出现刚才生成的IP核
 
-![image-20210303154630032](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154630032.png)
+![image-20210303154630032](./img/image-20210303154630032.png)
 
 刚开始下面的文件图标可能不一样，那是因为IP核还在综合生成，当图标变为上图时表示综合完成，然后我们可以看到之前Memory模块下的dual_mem图标变了
 
-![image-20210303154747761](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154747761.png)
+![image-20210303154747761](./img/image-20210303154747761.png)
 
 ### 7.6 生成bit/mcf文件
 
 接下来就可以点击左侧的Generate Bitstream来综合生成bit文件了，综合实现的时间可能比较久，请耐心等待。
 
-![image-20210303154819725](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154819725.png)
+![image-20210303154819725](./img/image-20210303154819725.png)
 
 在生成成功后会弹出对话框，选择Generate Memory Configuration File，然后点OK，如果一不小心关闭了这个对话框，也可以在菜单栏的Tools菜单中找到
 
-![image-20210303160416240](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160416240.png)
+![image-20210303160416240](./img/image-20210303160416240.png)
 
 配置如下图
 
-![image-20210303160519934](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160519934.png)
+![image-20210303160519934](./img/image-20210303160519934.png)
 
 ### 7.7 mcf文件烧录
 
 生成成功后，在侧边栏打开Harware Manager，连接好开发板，并打开开发板开关，点击自动连接按钮
 
-![image-20210303160602213](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160602213.png)
+![image-20210303160602213](./img/image-20210303160602213.png)
 
-![image-20210303160638189](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160638189.png)
+![image-20210303160638189](./img/image-20210303160638189.png)
 
 连接上开发板后，我们要在项目中为开发板添加一个固化Flash部件，选中芯片右键选择Add Configuration Memory Device
 
-![image-20210303161022822](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161022822.png)
+![image-20210303161022822](./img/image-20210303161022822.png)
 
-![image-20210303161047192](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161047192.png)
+![image-20210303161047192](./img/image-20210303161047192.png)
 
 然后会询问你是否要烧写新添加的Flash，选择OK，如果不小心关闭了对话框，在新添加的Flash上右键，选择Program Configuration Memory Device
 
-![image-20210303161137942](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161137942.png)
+![image-20210303161137942](./img/image-20210303161137942.png)
 
-![image-20210303161202833](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161202833.png)
+![image-20210303161202833](./img/image-20210303161202833.png)
 
-![image-20210303161248641](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161248641.png)
+![image-20210303161248641](./img/image-20210303161248641.png)
 
 ### 7.8 上板运行
 
@@ -305,10 +305,11 @@ TopMain.v文件添加完后，应该能够看到Memory模块下的双端口RAM�
 
 > 注意，如果你运行的程序没有调用PUTS或者OUT这类输出的TRAP程序，那么可能串口没有任何输出，但其实程序已经在运行了
 >
-> 其次在达芬奇Artix7开发板上，RESET复位信号是默认为高的，如果想让系统正常运行，在传输程序文件以及运行时，都要保证复位按钮处于按下的状态，这个问题可能之后会修复
+> 其次在达芬奇Artix7开发板上，RESET复位信号是低位有效的，如果想让系统正常运行，在传输程序文件以及运行时，都要保证复位按钮处于按下的状态
+> 或者可以修改复位信号为其他按钮的信号，比如将约束文件中的U2改为T5，就能够将复位信号绑定到开发板的触摸按键上
 
-![image-20210303161923265](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161923265.png)
+![image-20210303161923265](./img/image-20210303161923265.png)
 
 下图是在开发板上使用LC3系统运行计算机系统课程实验中的NIM游戏程序
 
-![LC3_NIM](C:\Users\zoujr\Desktop\LC3_NIM.png)
+![LC3_NIM](./img/LC3_NIM.png)
