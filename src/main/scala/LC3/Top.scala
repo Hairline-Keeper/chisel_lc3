@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 object CoreConfig {
-  val FPGAPlatform = true
+  val FPGAPlatform = false
   println("FPGAPlatform = " + FPGAPlatform)
 }
 
@@ -51,8 +51,6 @@ class Top extends Module{
     uartRx.io.rxd := soc_uartTx.io.txd
     soc_uartRx.io.rxd := uartTx.io.txd
     
-    // printf(p"${soc_uartTx.io.txd}")
-    
     when(boot.io.work) {
       dataPath.io.uartRx <> uartRx.io.channel
       boot.io.uartRx <> DontCare
@@ -79,7 +77,6 @@ class Top extends Module{
   memory.io.wdata := Mux(boot.io.work, dataPath.io.mem.wdata, boot.io.initMem.wdata)
   memory.io.wen := Mux(boot.io.work, dataPath.io.mem.wen, boot.io.initMem.wen)
 
-  // io.uart_txd := io.uart_rxd
   boot.io.initMem.rdata := DontCare
   boot.io.initMem.R := DontCare
 

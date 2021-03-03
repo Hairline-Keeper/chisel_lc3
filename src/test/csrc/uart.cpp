@@ -28,9 +28,6 @@ int txBitsReg = 0;
 // For uart_Rx
 int rxBitCnt = (FREQUENCY / BAUDRATE) - 1;
 int rxStartCnt = ((3*FREQUENCY/BAUDRATE)/2);
-int rxReg = 1;
-int rxReg_n1 = 1;
-int rxReg_n2 = 1;
 int rxShiftReg = 0;
 int rxCntReg = 0;
 int rxBitsReg = 0;
@@ -57,11 +54,6 @@ void init_uart_buffer(const char *img) {
     assert(ret == 1);
     fclose(fp);
     
-    // for(int i = 0; i < uart_size; i++) {
-    //     printf("%02x ", uart_buffer[i]);
-    // }
-    // printf("\n");
-    
     // init for uart_Tx
     txShiftReg = 0x7ff;
     txCntReg = 0;
@@ -76,9 +68,9 @@ static int get_str() {
     FD_ZERO(&rfds);
     FD_SET(0, &rfds);
     tv.tv_sec = 0;
-    tv.tv_usec = 10; //设置等待超时时间
+    tv.tv_usec = 10; // Set the waiting timeout period
 
-    //检测键盘是否有输入
+    // Check whether the keyboard has input
     if (select(1, &rfds, NULL, NULL, &tv) > 0)
     {
         fgets(str, KEY_QUEUE_LEN, stdin); 
@@ -123,15 +115,11 @@ extern "C" void uart_helper(uint8_t sendData, uint8_t sendData_valid, uint8_t *s
 }
 
 extern "C" void soc_uartRx_helper(uint8_t rxd) {
-    // rxReg_n2 = rxReg_n1;
-    // rxReg_n1 = rxReg;
-    // rxReg = rxd;
     if(rxCntReg != 0) {
         rxCntReg--;
     }else if (rxBitsReg != 0) {
         rxCntReg = rxBitCnt;
         rxShiftReg = (rxShiftReg >> 1) | (rxd << 7);
-        // printf("shiftReg=%x\n", rxShiftReg);
 
         if(rxBitsReg == 1) {
             rxValReg = 1;

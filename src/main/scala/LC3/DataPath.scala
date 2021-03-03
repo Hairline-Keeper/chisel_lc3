@@ -67,7 +67,9 @@ class DataPath extends Module {
   val PRE_IR = RegNext(IR)
   val END = RegInit(false.B)
   io.end := END
-  when(IR === 0.U && PRE_IR =/= 0.U) { END := true.B }
+  when(IR === 0.U && PRE_IR =/= 0.U) {
+    END := true.B
+  }
 
   /*********** IR Decode ****************/
   val baseR = IR(8,6)
@@ -166,7 +168,6 @@ class DataPath extends Module {
   // UART Input
   io.uartRx.ready := !KBSR(15).asBool
   when(io.uartRx.fire) {
-    printf(p"Send: ${io.uartRx.bits}\n")
     KBDR := Cat(0.U(8.W), io.uartRx.bits)
     KBSR := Cat(1.U(1.W), 0.U(15.W))
   }

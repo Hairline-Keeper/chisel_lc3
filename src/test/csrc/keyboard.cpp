@@ -27,9 +27,9 @@ static int get_str() {
     FD_ZERO(&rfds);
     FD_SET(0, &rfds);
     tv.tv_sec = 0;
-    tv.tv_usec = 10; //设置等待超时时间
+    tv.tv_usec = 10; // Set the waiting timeout period
 
-    //检测键盘是否有输入
+    // Check whether the keyboard has input
     if (select(1, &rfds, NULL, NULL, &tv) > 0)
     {
         fgets(str, KEY_QUEUE_LEN, stdin); 
