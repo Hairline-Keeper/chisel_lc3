@@ -95,7 +95,7 @@ make emu
 
 ## 四、LC3工作原理
 **程序加载**
-程序本质上是一组计算机能识别和执行的指令，程序的加载即把程序加载到内存。在我们写好的LC3程序中包含了*初始PC*（即第一条指令所在的内存地址），*指令*和*数据*。加载的过程中，以初始PC为起点，按LC3程序的长度覆盖内存。
+程序本质上是一组计算机能识别和执行的指令，程序的加载即把程序加载到内存。在程序启动时会首先将程序加载进内存。在我们写好的LC3程序中包含了*初始PC*（即第一条指令所在的内存地址），*指令*和*数据*。加载的过程中，以初始PC为起点，按LC3程序的长度覆盖内存。
 
 **程序如何运行**
 一个简单的规定: 当执行完一条指令之后, 就继续执行下一条指令. 但LC3怎么知道现在执行到哪一条指令呢? LC3根据PC从内存取出指令，取出后PC+1，下一次取值自然就会取到下一条指令，便达到了规定的执行完一条自动执行下一条。
@@ -159,6 +159,156 @@ ALU是最基本的模块，用于做数学计算以及算术计算，纯组合�
 
 一个处理器和外界交互最重要的就是输入和输出，而Uart是最常用的一种通信协议，项目使用的Uart模块是在开源项目[[1]](https://github.com/huangruidtu/Chisel-uart)、[[2]](https://github.com/nyuichi/Chisel-uart)的基础上修改的，这部分功能在仿真的时候也是使用DPI-C来模拟现实硬件中Uart的输入输出，在仿真运行时模拟Uart输入的C函数会定时检查在终端是否有键盘输入，如果有的话会将输入暂存到一个缓冲中，每次Uart只能将一个Byte的数据传给LC-3，并且只有当LC-3接收了这个数据后，才能够传送下一个数据；模拟Uart输出的C函数会定时的检查LC-3有没有需要输出的数据，如果有将其打印到终端，并告诉LC-3数据已经被接收，可以发送下一个数据。
 
+**Boot**
+
+这个模块用于在LC3系统正式运行前，通过Uart接收需要运行的程序文件，将其放入内存后，设置LC3的初始PC，并让系统正式开始运行。
+
 ## 六、调试
 
 在Makefile文件中有一个变量TRACE，默认是空值，如果想要生成仿真的波形文件，需要将TRACE的值设置为 -t，则在运行之后会在build目录下生成emu.vcd波形文件，使用[GTKWave](http://gtkwave.sourceforge.net/)打开即可看到波形用于调试。
+
+
+
+## 七、FPGA运行
+
+将整个LC3系统烧录到FPGA上运行，需要使用Vivado将之前编译生成的verilog文件TopMain.v综合并生成bit文件，然后使用bit文件生成mcf文件，将其烧录到FPGA上的Flash中。为了能够和FPGA上的系统进行交互，我们还需要在自己的电脑上安装[串口调试助手](https://www.microsoft.com/zh-sg/p/%e4%b8%b2%e5%8f%a3%e8%b0%83%e8%af%95%e5%8a%a9%e6%89%8b/9nblggh43hdm?rtc=1#activetab=pivot:overviewtab)，然后将FPGA的串口和电脑连接。接下来将详细介绍整个流程。
+
+### 7.1 环境介绍
+
+在此文档中使用的环境是Windows系统，微软串口调试助手，以及达芬奇Artix7开发板，在流程介绍中只对关键的一些设置进行说明，如果想了解关于开发板更详细的内容，请参考开发指南，如需要开发指南可以联系学长，或者灵活使用搜索引擎。
+
+### 7.2 生成verilog文件
+
+注意chisel_lc3项目默认是用仿真模式运行的，而想要生成能够烧入FPGA的verilog文件，需要将chisel_lc3/src/main/scala/LC3/Top.scala中的FPGAPlatform选项设置为true（默认是false）。设置为true后项目会将使用DPI-C进行仿真的Memory模块用真正的双端口RAM替换。并修改一些连线等细节。
+
+```scala
+object CoreConfig {
+  val FPGAPlatform = true
+  println("FPGAPlatform = " + FPGAPlatform)
+}
+```
+
+运行
+
+```shell
+make verilog -j
+```
+
+TopMain.v文件会生成在chisel_lc3/build目录下
+
+
+
+### 7.3 创建Vivado工程
+
+![image-20210303152040601](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303152040601.png)
+
+切记选择正确的板卡型号
+
+
+
+### 7.4 添加verilog文件与约束
+
+将TomMain.v文件添加到项目中
+
+![image-20210303152230795](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303152230795.png)
+
+创建新的约束文件，写入以下内容。约束文件声明了全局时钟，复位信号，以及绑定Uart的接口。
+
+```verilog
+create_clock -period 20.000 -name clk [get_ports clock]
+set_property -dict {PACKAGE_PIN R4 IOSTANDARD LVCMOS33} [get_ports clock]
+set_property -dict {PACKAGE_PIN U2 IOSTANDARD LVCMOS33} [get_ports reset]
+set_property -dict {PACKAGE_PIN U5 IOSTANDARD LVCMOS33} [get_ports io_uart_rxd]
+set_property -dict {PACKAGE_PIN T6 IOSTANDARD LVCMOS33} [get_ports io_uart_txd]
+
+set_property CFGBVS VCCO [current_design]
+set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS true [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]
+```
+
+### 7.5 添加RAM IP核
+
+TopMain.v文件添加完后，应该能够看到Memory模块下的双端口RAM是找不到定义的，这个RAM需要使用Vivado自带的Block Memory Generator来生成。
+
+在Vivado 软件的左侧“Flow Navigator”栏中单击“IP Catalog”，如下图所示。
+
+![image-20210303153901451](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303153901451.png)
+
+然后在弹出的窗口中搜索Block Memory Generator，图中两个结果是同一个IP核，双击选第一个即可
+
+![image-20210303153942646](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303153942646.png)
+
+在弹出的配置窗口中按照下图配置
+
+![image-20210303154417304](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154417304.png)
+
+![image-20210303154427675](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154427675.png)
+
+![image-20210303155523529](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303155523529.png)
+
+![image-20210303155755664](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303155755664.png)
+
+其中的init.coe文件是RAM的初始化文件。文件中包含了LC3中的TRAP程序，该文件在chisel_lc3目录下能够找到
+
+![image-20210303154501999](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154501999.png)
+
+点击Generate后，在Source面板的IP Sources标签页下会出现刚才生成的IP核
+
+![image-20210303154630032](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154630032.png)
+
+刚开始下面的文件图标可能不一样，那是因为IP核还在综合生成，当图标变为上图时表示综合完成，然后我们可以看到之前Memory模块下的dual_mem图标变了
+
+![image-20210303154747761](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154747761.png)
+
+### 7.6 生成bit/mcf文件
+
+接下来就可以点击左侧的Generate Bitstream来综合生成bit文件了，综合实现的时间可能比较久，请耐心等待。
+
+![image-20210303154819725](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303154819725.png)
+
+在生成成功后会弹出对话框，选择Generate Memory Configuration File，然后点OK，如果一不小心关闭了这个对话框，也可以在菜单栏的Tools菜单中找到
+
+![image-20210303160416240](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160416240.png)
+
+配置如下图
+
+![image-20210303160519934](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160519934.png)
+
+### 7.7 mcf文件烧录
+
+生成成功后，在侧边栏打开Harware Manager，连接好开发板，并打开开发板开关，点击自动连接按钮
+
+![image-20210303160602213](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160602213.png)
+
+![image-20210303160638189](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303160638189.png)
+
+连接上开发板后，我们要在项目中为开发板添加一个固化Flash部件，选中芯片右键选择Add Configuration Memory Device
+
+![image-20210303161022822](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161022822.png)
+
+![image-20210303161047192](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161047192.png)
+
+然后会询问你是否要烧写新添加的Flash，选择OK，如果不小心关闭了对话框，在新添加的Flash上右键，选择Program Configuration Memory Device
+
+![image-20210303161137942](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161137942.png)
+
+![image-20210303161202833](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161202833.png)
+
+![image-20210303161248641](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161248641.png)
+
+### 7.8 上板运行
+
+烧录完成后，系统就已经烧入到开发板中了，现在重启开发板，使用串口调试助手连接上开发板的Uart串口，选择发送文件，然后选择想要运行的obj文件发送，就可以看到程序运行的输出。
+
+> 注意，如果你运行的程序没有调用PUTS或者OUT这类输出的TRAP程序，那么可能串口没有任何输出，但其实程序已经在运行了
+>
+> 其次在达芬奇Artix7开发板上，RESET复位信号是默认为高的，如果想让系统正常运行，在传输程序文件以及运行时，都要保证复位按钮处于按下的状态，这个问题可能之后会修复
+
+![image-20210303161923265](C:\Users\zoujr\AppData\Roaming\Typora\typora-user-images\image-20210303161923265.png)
+
+下图是在开发板上使用LC3系统运行计算机系统课程实验中的NIM游戏程序
+
+![LC3_NIM](C:\Users\zoujr\Desktop\LC3_NIM.png)
