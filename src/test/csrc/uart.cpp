@@ -20,10 +20,21 @@ static char uart_buffer[BUFFERSIZE];
 static int uart_ptr = 0, uart_size = 0;
 
 // For uart_Tx
-int bitCnt = (FREQUENCY / BAUDRATE) - 1;
-int shiftReg = 0x7ff;
-int cntReg = 0;
-int bitsReg = 0;
+int txBitCnt = (FREQUENCY / BAUDRATE) - 1;
+int txShiftReg = 0x7ff;
+int txCntReg = 0;
+int txBitsReg = 0;
+
+// For uart_Rx
+int rxBitCnt = (FREQUENCY / BAUDRATE) - 1;
+int rxStartCnt = ((3*FREQUENCY/BAUDRATE)/2);
+int rxReg = 1;
+int rxReg_n1 = 1;
+int rxReg_n2 = 1;
+int rxShiftReg = 0;
+int rxCntReg = 0;
+int rxBitsReg = 0;
+int rxValReg = 0;
 
 void init_uart_buffer(const char *img) {
     FILE *fp = fopen(img, "rb");
@@ -52,9 +63,9 @@ void init_uart_buffer(const char *img) {
     // printf("\n");
     
     // init for uart_Tx
-    shiftReg = 0x7ff;
-    cntReg = 0;
-    bitsReg = 0;
+    txShiftReg = 0x7ff;
+    txCntReg = 0;
+    txBitsReg = 0;
 }
 
 static int get_str() {
@@ -112,31 +123,73 @@ extern "C" void uart_helper(uint8_t sendData, uint8_t sendData_valid, uint8_t *s
 }
 
 extern "C" void soc_uartRx_helper(uint8_t rxd) {
-    int bitCnt = (FREQUENCY / BAUDRATE) - 1;
-    int startCnt = (3*(FREQUENCY / BAUDRATE)) / 2;
+    // rxReg_n2 = rxReg_n1;
+    // rxReg_n1 = rxReg;
+    // rxReg = rxd;
+    if(rxCntReg != 0) {
+        rxCntReg--;
+    }else if (rxBitsReg != 0) {
+        rxCntReg = rxBitCnt;
+        rxShiftReg = (rxShiftReg >> 1) | (rxd << 7);
+        // printf("shiftReg=%x\n", rxShiftReg);
+
+        if(rxBitsReg == 1) {
+            rxValReg = 1;
+        }
+
+        rxBitsReg--;
+    }else if (rxd == 0) {
+        rxCntReg = rxStartCnt;
+        rxBitsReg = 8;
+    }
     
+    // printf("rxBitsReg=%d\n", rxBitsReg);
+    
+    if(rxValReg) {
+        rxValReg = 0;
+        printf("Get UART output: %c\n", rxShiftReg);
+        rxShiftReg= 0;
+    }
 }
 
 extern "C" void soc_uartTx_helper(uint8_t *txd) {
-    *txd = shiftReg & 1;
+    *txd = txShiftReg & 1;
 
-    if(cntReg == 0) {
-        cntReg = bitCnt;
-        if(bitsReg != 0) {
-            shiftReg = (shiftReg >> 1) | 0x400;
-            bitsReg--;
+    if(txCntReg == 0) {
+        txCntReg = txBitCnt;
+        if(txBitsReg != 0) {
+            txShiftReg = (txShiftReg >> 1) | 0x400;
+            txBitsReg--;
         }else {
             if(uart_ptr < uart_size) {
-                shiftReg = (uart_buffer[uart_ptr] << 1) | 0x600;
-                printf("data = %02x\n", uart_buffer[uart_ptr]);
-                // printf("shiftReg = %03x\n", shiftReg);
+                txShiftReg = (uart_buffer[uart_ptr] << 1) | 0x600;
+                // printf("data = %02x\n", uart_buffer[uart_ptr]);
+                // printf("txShiftReg = %03x\n", txShiftReg);
                 uart_ptr++;
-                bitsReg = 11;
+                txBitsReg = 11;
             } else {
-                shiftReg = 0x7ff;
+                txShiftReg = 0x7ff;
             }
         }
     }else {
-        cntReg--;
+        txCntReg--;
     }
+
+    /* TODO: Replace with circular queue
+     *
+     * Warn: Don't input character before the program is completely loaded,
+     * because uart judges that the program is loaded through a timeout mechanism
+     */
+    if(get_str()) {
+        printf("get input: %s\n", str);
+        uart_ptr = 0;
+        uart_size = 0;
+        for(int i = 0; i < str_len; i++) {
+            if(size < BUFFERSIZE) {
+                uart_buffer[i] = str[i];
+                uart_size++;
+            }
+        }
+    }
+
 }

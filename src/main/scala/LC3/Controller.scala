@@ -132,13 +132,15 @@ class Controller extends Module with ControlParam {
     val out = Output(new signalEntry)     // output control signal
 
     val work = Input(Bool())
+
+    val end = Input(Bool())
   })
 
   val (sig, int, r, ir, ben, psr, out) = (io.in.sig, io.in.int, io.in.r, io.in.ir, io.in.ben, io.in.psr, io.out)
   val state = RegInit(0.U(stateBits.W))
   out := ctrlSigRom(state)
 
-  when(io.work){
+  when(io.work && !io.end){
     switch (state) {
       is (0.U) { state := Mux(ben, 22.U, 18.U) }
       is (1.U) { state := 18.U }

@@ -44,7 +44,7 @@ class Boot extends Module with HasUartCst{
   val fullDone  = second && uartDone
 
   when(uartDone){ second := !second }
-  when(fullDone){ printf("fullDone: %x\n", fullData) }
+  // when(fullDone){ printf("fullDone: %x\n", fullData) }
 
   when(lc3State === initpc && fullDone){
     memAddr := fullData

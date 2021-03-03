@@ -21,6 +21,8 @@ class DataPath extends Module {
     val initPC = Flipped(ValidIO(Input(UInt(16.W))))
     val uartRx = Flipped(DecoupledIO(UInt(8.W)))
     val uartTx = DecoupledIO(UInt(8.W))
+
+    val end = Output(Bool())
   })
 
   val SIG = io.signal
@@ -61,8 +63,13 @@ class DataPath extends Module {
   val BUSOUT = WireInit(0.U(16.W))
   val BUSEN =  WireInit(false.B)
 
+  // Stop LC3 when program run end
+  val PRE_IR = RegNext(IR)
+  val END = RegInit(false.B)
+  io.end := END
+  when(IR === 0.U && PRE_IR =/= 0.U) { END := true.B }
+
   /*********** IR Decode ****************/
-  // assert(IR =/= 0.U)
   val baseR = IR(8,6)
   val src2  = IR(2,0)
   val isImm = IR(5)

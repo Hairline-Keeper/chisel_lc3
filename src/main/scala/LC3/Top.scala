@@ -35,6 +35,7 @@ class Top extends Module{
     }
 
     uartTx.io.channel <> dataPath.io.uartTx
+    controller.io.end := dataPath.io.end
   } else {
     io.uart_txd := true.B
 
@@ -63,6 +64,8 @@ class Top extends Module{
     }
 
     uartTx.io.channel <> dataPath.io.uartTx
+    
+    controller.io.end := dataPath.io.end
   }
 
   controller.io.in <> dataPath.io.out
