@@ -11,3 +11,5 @@ extern int read_ram(int addr);
 
 extern void init_keyboard();
 extern void polling_keyboard();
+
+extern void init_uart_buffer(const char* img);

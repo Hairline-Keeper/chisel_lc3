@@ -36,7 +36,7 @@ class Regfile extends Module{
   val lastR = Reg(UInt(80.W));
   lastR := Cat(R0, R1, R2, R3, R4)
   val newR = Cat(R0, R1, R2, R3, R4)
-  when(wenLatch && lastR =/= newR) {
-    printf("R0=%d,R1=%d,R2=%d,R3=%d,R4=%d\n", R0, R1, R2, R3, R4)
-  }
+  // when(wenLatch && lastR =/= newR) {
+  //   printf("R0=%d,R1=%d,R2=%d,R3=%d,R4=%d\n", R0, R1, R2, R3, R4)
+  // }
 }

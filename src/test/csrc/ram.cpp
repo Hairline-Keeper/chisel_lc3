@@ -92,6 +92,7 @@ void init_ram(const char *img) {
     // FIXME: Only x3000-xffff can use store image
 
     // display_ram(KBSR,128);
+    init_uart_buffer(img);
 }
 
 void write_ram(int addr, int data) {
