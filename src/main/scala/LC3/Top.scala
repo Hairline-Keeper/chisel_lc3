@@ -7,6 +7,7 @@ object CoreConfig {
   val FPGAPlatform = false
   val REPLACE_MEM = false
   println("FPGAPlatform = " + FPGAPlatform)
+  println("REPLACE_MEM = " + REPLACE_MEM)
 }
 
 class Top extends Module{

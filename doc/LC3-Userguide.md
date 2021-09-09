@@ -179,12 +179,14 @@ ALU是最基本的模块，用于做数学计算以及算术计算，纯组合�
 
 ### 7.2 生成verilog文件
 
-注意chisel_lc3项目默认是用仿真模式运行的，而想要生成能够烧入FPGA的verilog文件，需要将chisel_lc3/src/main/scala/LC3/Top.scala中的FPGAPlatform选项设置为true（默认是false）。设置为true后项目会将使用DPI-C进行仿真的Memory模块用真正的双端口RAM替换。并修改一些连线等细节。
+注意chisel_lc3项目默认是用仿真模式运行的，而想要生成能够烧入FPGA的verilog文件，需要将chisel_lc3/src/main/scala/LC3/Top.scala中的FPGAPlatform和REPLACE_MEM选项都设置为true（默认是false）。设置为true后项目会将使用DPI-C进行仿真的Memory模块用真正的双端口RAM替换。并修改一些连线等细节。
 
 ```scala
 object CoreConfig {
   val FPGAPlatform = true
+  val REPLACE_MEM = false
   println("FPGAPlatform = " + FPGAPlatform)
+  println("REPLACE_MEM = " + REPLACE_MEM)
 }
 ```
 
