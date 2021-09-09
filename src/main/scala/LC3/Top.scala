@@ -5,6 +5,7 @@ import chisel3.util._
 
 object CoreConfig {
   val FPGAPlatform = false
+  val REPLACE_MEM = false
   println("FPGAPlatform = " + FPGAPlatform)
 }
 
