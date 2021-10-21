@@ -20,14 +20,5 @@ class ALU extends Module{
 
   // lab4-task1
   // 在此编写运算器逻辑
-  switch (io.op) {
-    is (0.U) {
-      result := io.ina +& io.inb
-      io.out := result(15,0)
-      io.c := result(16)
-    }
-    is (1.U) { io.out := io.ina &io.inb }
-    is (2.U) { io.out := ~io.ina }
-    is (3.U) { io.out := io.ina }
-  }
+
 }

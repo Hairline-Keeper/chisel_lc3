@@ -53,6 +53,7 @@ class MemIO extends Bundle {
   val wdata = Input(UInt(16.W))
   val wen = Input(Bool())
   val R = Output(Bool())
+  val mio_en = Input(Bool())
 }
 
 class Memory extends Module {
@@ -89,5 +90,5 @@ class Memory extends Module {
     mem.io.wen := io.wen
   }
   
-  io.R := true.B
+  io.R := RegNext(io.mio_en)
 }

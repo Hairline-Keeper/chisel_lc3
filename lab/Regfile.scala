@@ -20,11 +20,4 @@ class Regfile extends Module{
   // lab4-task1
   // 在此编写寄存器堆逻辑
 
-  val regfile = RegInit(VecInit(Seq.fill(8)(0.U(16.W))))
-
-  when(io.wen){
-    regfile(io.wAddr) := io.wData
-  }
-  io.r1Data := regfile(io.r1Addr)
-  io.r2Data := regfile(io.r2Addr)
 }

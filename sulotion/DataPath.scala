@@ -30,6 +30,7 @@ class DataPath extends Module {
 
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
+  // val bus = Module(new SimpleBus)
   
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
