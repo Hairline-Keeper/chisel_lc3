@@ -1,63 +1,36 @@
-import mill._, scalalib._
+import os.Path
+import mill._
+import scalalib._
 
 /**
  * Scala 2.12 module that is source-compatible with 2.11.
  * This is due to Chisel's use of structural types. See
  * https://github.com/freechipsproject/chisel3/issues/606
  */
-trait HasXsource211 extends ScalaModule {
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Seq(
-      "-deprecation",
-      "-unchecked",
-      "-Xsource:2.11"
-    )
-  }
+
+object ivys {
+  val sv = "2.12.13"
+  val chisel3 = ivy"edu.berkeley.cs::chisel3:3.5.0-RC1"
+  val chisel3Plugin = ivy"edu.berkeley.cs:::chisel3-plugin:3.5.0-RC1"
+  val chiseltest = ivy"edu.berkeley.cs::chiseltest:0.3.2"
+  val scalatest = ivy"org.scalatest::scalatest:3.2.2"
+  val macroParadise = ivy"org.scalamacros:::paradise:2.1.1"
 }
 
-trait HasChisel3 extends ScalaModule {
-  override def ivyDeps = Agg(
-    ivy"edu.berkeley.cs::chisel3:3.3.2"
- )
+trait LC3Module extends ScalaModule {
+  override def scalaVersion = ivys.sv
+  override def ivyDeps = Agg(ivys.chisel3, ivys.chiseltest)
+  override def compileIvyDeps = Agg(ivys.macroParadise)
+  override def scalacPluginIvyDeps = Agg(ivys.macroParadise, ivys.chisel3Plugin)
+  override def scalacOptions = Seq("-Xsource:2.11")
 }
 
-trait HasChiselTests extends CrossSbtModule  {
-  object test extends Tests {
-    override def ivyDeps = Agg(ivy"org.scalatest::scalatest:3.0.8", ivy"edu.berkeley.cs::chisel-iotesters:1.2+")
-    def testFrameworks = Seq("org.scalatest.tools.Framework")
-  }
-}
-
-trait HasMacroParadise extends ScalaModule {
-  // Enable macro paradise for @chiselName et al
-  val macroPlugins = Agg(ivy"org.scalamacros:::paradise:2.1.0")
-  def scalacPluginIvyDeps = macroPlugins
-  def compileIvyDeps = macroPlugins
-}
-
-// object chiselModule extends CrossSbtModule with HasChisel3 with HasChiselTests with HasXsource211 with HasMacroParadise {
-//   def crossScalaVersion = "2.11.12"
-// }
-
-object chisel_lc3 extends HasChisel3 with CrossSbtModule with HasMacroParadise{
-  def crossScalaVersion = "2.11.12"
-  object test extends Tests {
+object chisel_lc3 extends LC3Module with SbtModule {
+  override def millSourcePath = os.pwd
+  object test extends Tests with TestModule.ScalaTest {
     override def ivyDeps = super.ivyDeps() ++ Agg(
-      ivy"org.scalatest::scalatest:3.0.4",
-      ivy"edu.berkeley.cs::chisel-iotesters:1.4.1+",
-      ivy"edu.berkeley.cs::chiseltest:0.2.1+"
+      ivys.scalatest
     )
-
-    def testFrameworks = T {
-      Seq(
-        "org.scalatest.tools.Framework",
-        "utest.runner.Framework"
-      )
-    }
-
-    def testOnly(args: String*) = T.command {
-      super.runMain("org.scalatest.tools.Runner", args: _*)
-    }
-    // def mainClass = Some("chisel_lc3.LC3.Top")
   }
+  
 }

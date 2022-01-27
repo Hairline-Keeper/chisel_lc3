@@ -2,6 +2,7 @@ package LC3
 
 import chisel3._
 import chisel3.util._
+import chisel3.stage._
 
 object CoreConfig {
   val FPGAPlatform = false
@@ -89,5 +90,7 @@ class Top extends Module{
 }
 
 object SimMain extends App {
-  Driver.execute(args, () => new Top)
+  (new ChiselStage).execute(args, Seq(
+    ChiselGeneratorAnnotation(() => new Top))
+  )
 }
