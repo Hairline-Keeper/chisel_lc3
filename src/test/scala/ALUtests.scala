@@ -2,14 +2,11 @@ package LC3
 
 import chisel3._
 import chiseltest._
-import org.scalatest._
-
+import org.scalatest.flatspec.AnyFlatSpec
 import scala.util.Random
 
-class ALUtest extends FlatSpec
+class ALUtest extends AnyFlatSpec
   with ChiselScalatestTester
-  with Matchers
-  with ParallelTestExecution
 {
   behavior of "ALU"
 
@@ -22,14 +19,14 @@ class ALUtest extends FlatSpec
     inb(i) = Random.nextInt(0xffff)
     add_out(i) = ina(i) + inb(i)
     and_out(i) = ina(i) & inb(i)
-    not_out(i) = ~ina(i)
+    not_out(i) = 0xffff-ina(i)
     pass_out(i) = ina(i)
   }
 
 
   it should "test add" in {
     test(new ALU) { c =>
-      println(s"\n*******test add********\n")
+      println(s"*******test add********")
       c.io.op.poke(0.U)
       for(i <- 0 until TEST_SIZE) {
 //        println(s"${i}. ina=${ina(i)}  inb=${inb(i)}  add_out=${add_out(i)}\n")
@@ -44,34 +41,30 @@ class ALUtest extends FlatSpec
 
   it should "test and" in {
     test(new ALU) { c =>
-      println(s"\n*******test and********\n")
+      println(s"*******test and********")
       c.io.op.poke(1.U)
       for(i <- 0 until TEST_SIZE) {
-//        println(s"${i}. ina=${ina(i)}\n")
-//        println(s"   inb=${inb(i)}\n")
-//        println(s"   and_out=${and_out(i)}\n")
         c.io.ina.poke(ina(i).U)
         c.io.inb.poke(inb(i).U)
         c.io.out.expect(and_out(i).U)
-//        println(s"${i}. io.out=${c.io.out.peek}\n")
       }
     }
   }
 
   it should "test not" in {
     test(new ALU) { c =>
-      println(s"\n*******test not********\n")
+      println(s"*******test not********")
       c.io.op.poke(2.U)
       for(i <- 0 until TEST_SIZE) {
         c.io.ina.poke(ina(i).U)
-        c.io.out.expect(not_out(i).toBinaryString.U(15, 0))
+        c.io.out.expect(not_out(i).U(15, 0))
       }
     }
   }
 
   it should "test pass" in {
     test(new ALU) { c =>
-      println(s"\n*******test pass*******\n")
+      println(s"*******test pass*******")
       c.io.op.poke(3.U)
       for(i <- 0 until TEST_SIZE) {
         c.io.ina.poke(ina(i).U)
@@ -81,8 +74,3 @@ class ALUtest extends FlatSpec
   }
 }
 
-// object TestMain extends App {
-//   iotesters.Driver.execute(args, () => new ALU) {
-//     c => new ALUtest(c)
-//   }
-// }
