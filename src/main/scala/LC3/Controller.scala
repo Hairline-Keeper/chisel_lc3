@@ -43,6 +43,7 @@ class Controller extends Module {
   val io = IO(new Bundle{
     val in  = Flipped(new FeedBack)
     val out = Output(new signalEntry)     // output control signal
+    val state = Output(UInt(6.W))         // for test
 
     val work = Input(Bool())
     val end = Input(Bool())
@@ -50,6 +51,8 @@ class Controller extends Module {
 
   val (sig, int, r, ir, ben, psr, out) = (io.in.sig, io.in.int, io.in.r, io.in.ir, io.in.ben, io.in.psr, io.out)
   val state = RegInit(0.U(6.W))
+
+  io.state := state   // for test
 
   val signalTable = VecInit(
     "b00000000000_00000000_000000000000000_00000".U,

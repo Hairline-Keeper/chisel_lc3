@@ -5,15 +5,16 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import scala.util.Random
 
-class ALUtest extends AnyFlatSpec
+class ALUTest extends AnyFlatSpec
   with ChiselScalatestTester
 {
   behavior of "ALU"
 
   def TEST_SIZE = 10
 
-  val ina, inb, add_out, and_out, not_out, pass_out= Array.fill(TEST_SIZE)(0)
+  val ina, inb, add_out, and_out, not_out, pass_out = Array.fill(TEST_SIZE)(0)
 
+  // 生成正确模型结果
   for (i <- 0 until TEST_SIZE) {
     ina(i) = Random.nextInt(0xffff)
     inb(i) = Random.nextInt(0xffff)
@@ -23,17 +24,15 @@ class ALUtest extends AnyFlatSpec
     pass_out(i) = ina(i)
   }
 
-
+  // 硬件部分
   it should "test add" in {
     test(new ALU) { c =>
       println(s"*******test add********")
-      c.io.op.poke(0.U)
       for(i <- 0 until TEST_SIZE) {
 //        println(s"${i}. ina=${ina(i)}  inb=${inb(i)}  add_out=${add_out(i)}\n")
         c.io.ina.poke(ina(i).U)
         c.io.inb.poke(inb(i).U)
         c.io.out.expect(add_out(i).U(15,0))
-        c.io.c.expect((add_out(i)>0xffff).B)
 //        println(s"${i}. io.out=${c.io.out.peek}  io.c=${c.io.c.peek}\n")
       }
     }

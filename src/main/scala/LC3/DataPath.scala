@@ -69,7 +69,7 @@ class DataPath extends Module {
   val offset8  = ZeroExt(IR(7,0),  16)  // interrupt vector (TRAP)
 
   /********  Mux  ********/
-  // lab4-task3
+  // lab4-task4
   // 请在下方填写数据通的MUX部件
 
   // ADDR1MUX
@@ -195,7 +195,7 @@ class DataPath extends Module {
   io.mem.mio_en := SIG.MIO_EN
 
   /*************  Gate *************/
-  // Lab4-task4
+  // Lab4-task5
   // 编写八选一逻辑 根据 Gate*信号，从八个数据中选出一个
 
 
@@ -223,7 +223,7 @@ class DataPath extends Module {
 
 
   /********  LD  ********/
-  // lab4-task5
+  // lab4-task6
   // 根据LD条件编写寄存器值更改的逻辑
 
   // SIG.LD_MAR

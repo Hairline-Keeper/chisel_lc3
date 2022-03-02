@@ -26,7 +26,7 @@ class ALU extends Module{
       io.out := result(15,0)
       io.c := result(16)
     }
-    is (1.U) { io.out := io.ina &io.inb }
+    is (1.U) { io.out := io.ina & io.inb }
     is (2.U) { io.out := ~io.ina }
     is (3.U) { io.out := io.ina }
   }
