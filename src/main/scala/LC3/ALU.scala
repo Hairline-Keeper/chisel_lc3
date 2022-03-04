@@ -10,24 +10,13 @@ class ALU extends Module{
     val inb = Input(UInt(16.W))
     val op  = Input(UInt(2.W))    //ADD,AND,NOT,PASSA
     val out = Output(UInt(16.W))
-    val c   = Output(UInt(1.W))
   })
   val result = Wire(UInt(17.W))
 
   io.out := DontCare
-  io.c := DontCare
   result := DontCare
 
   // lab4-task1
   // 在此编写运算器逻辑
-  switch (io.op) {
-    is (0.U) {
-      result := io.ina +& io.inb
-      io.out := result(15,0)
-      io.c := result(16)
-    }
-    is (1.U) { io.out := io.ina &io.inb }
-    is (2.U) { io.out := ~io.ina }
-    is (3.U) { io.out := io.ina }
-  }
+
 }

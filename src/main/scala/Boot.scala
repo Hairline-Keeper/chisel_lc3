@@ -24,40 +24,30 @@ class Boot extends Module with HasUartCst{
   
   val timeOut = inTransStart && (timeCount > (((frequency/baudRate) - 1)*16).U)
 
-  val memAddr = Reg(UInt(16.W))
-  val second    = RegInit(init = false.B)     // receive uart data twice and connect the data to 16bits
-  val firstData = RegEnable(uartBits, uartValid)
-  val fullData  = Cat(firstData, uartBits)    // (secondData, firstData)
-  val fullValid  = second && uartValid
+  val memAddr     = Reg(UInt(16.W))
+  val secondValid = RegInit(init = false.B)     // receive uart data twice and connect the data to 16bits
+  val firstData   = RegEnable(uartBits, uartValid)
+  val wordData    = Cat(firstData, uartBits)    // (secondData, firstData)
+  val wordValid   = second && uartValid
 
   when(uartValid){ second := !second }
-  when(fullValid){ printf("fullValid: %x\n", fullData) }
+  when(wordValid){ printf("wordValid: %x\n", wordData) }
 
   val initpc :: initmem :: work :: Nil = Enum(3)
   val lc3State = RegInit(initpc)
   when(reset.asBool()){ lc3State := initpc }
 
-  when(lc3State === initpc && fullValid){
-    memAddr := fullData
-    lc3State := initmem
-  }
-    
-  when(lc3State === initmem && fullValid){
-    memAddr := memAddr + 1.U
-  }
-
-  when(lc3State === initmem && timeOut){
-    lc3State := work
-    printf("Mem init finished, LC3 start work\n")
-  }
+  // lab5-task1
+  // 在此编写状态转换
+  
 
   // control memory
-  io.initPC.valid := (lc3State === initpc) && fullValid
-  io.initPC.bits := fullData
+  io.initPC.valid := (lc3State === initpc) && wordValid
+  io.initPC.bits := wordData
 
   io.initMem <> DontCare
-  io.initMem.wen := (lc3State === initmem) && fullValid
-  io.initMem.wdata := fullData
+  io.initMem.wen := (lc3State === initmem) && wordValid
+  io.initMem.wdata := wordData
   io.initMem.waddr := memAddr
 
   io.work := (lc3State === work)

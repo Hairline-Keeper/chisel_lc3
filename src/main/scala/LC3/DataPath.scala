@@ -30,6 +30,7 @@ class DataPath extends Module {
 
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
+  // val bus = Module(new SimpleBus)
   
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
@@ -69,7 +70,7 @@ class DataPath extends Module {
   val offset8  = ZeroExt(IR(7,0),  16)  // interrupt vector (TRAP)
 
   /********  Mux  ********/
-  // lab4-task4
+  // lab4-task3
   // 请在下方填写数据通的MUX部件
 
   // ADDR1MUX
@@ -92,54 +93,6 @@ class DataPath extends Module {
 
   // PSRMUX
   
-  val ADDR1MUX = Mux(SIG.ADDR1_MUX, regfile.io.r1Data, PC)
-
-  val ADDR2MUX = MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
-    0.U -> 0.U,
-    1.U -> offset6,
-    2.U -> offset9,
-    3.U -> offset11
-  ))
-
-  val addrOut = ADDR1MUX + ADDR2MUX
-
-  val PCMUX = MuxLookup(SIG.PC_MUX, RESET_PC, Seq(
-    0.U -> Mux(PC===0.U, RESET_PC,  PC + 1.U),
-    1.U -> GATEOUT,
-    2.U -> addrOut
-  ))
-
-
-  val DRMUX = MuxLookup(SIG.DR_MUX, IR(11,9), Seq(
-    0.U -> IR(11,9),
-    1.U -> R7,
-    2.U -> SP
-  ))
-
-  val SR1MUX = MuxLookup(SIG.SR1_MUX, IR(11,9), Seq(
-    0.U -> IR(11,9),
-    1.U -> IR(8,6),
-    2.U -> SP
-  ))
-
-  val SR2MUX = Mux(IR(5), offset5, regfile.io.r2Data)
-
-  val SPMUX = MuxLookup(SIG.SP_MUX, regfile.io.r1Data+1.U, Seq(
-    0.U -> (regfile.io.r1Data+1.U),
-    1.U -> (regfile.io.r1Data-1.U),
-    2.U -> SP, // TODO: Supervisor StackPointer
-    3.U -> SP  // TODO: User StackPointer
-  ))
-
-  val MARMUX = Mux(SIG.MAR_MUX, addrOut, offset8)
-  
-  val VectorMUX = MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
-    0.U -> 0.U,
-    1.U -> 0.U,
-    2.U -> 0.U
-  ))
-
-  val PSRMUX = 0.U
 
   /*********** ALU Interface ****************/
   alu.io.ina := regfile.io.r1Data
@@ -195,35 +148,12 @@ class DataPath extends Module {
   io.mem.mio_en := SIG.MIO_EN
 
   /*************  Gate *************/
-  // Lab4-task5
-  // 编写八选一逻辑 根据 Gate*信号，从八个数据中选出一个
-
-
-  val GateSig = Cat(Seq(
-    SIG.GATE_PC,
-    SIG.GATE_MDR,
-    SIG.GATE_ALU,
-    SIG.GATE_MARMUX,
-    SIG.GATE_VECTOR,
-    SIG.GATE_PC1,
-    SIG.GATE_PSR,
-    SIG.GATE_SP
-  ).reverse)
-
-  GATEOUT := Mux1H(GateSig, Seq(
-    PC,
-    MDR,
-    alu.io.out,
-    MARMUX,
-    Cat(1.U(8.W), 0.U),
-    PC - 1.U,
-    Cat(Seq(0.U(13.W),PSRMUX)),
-    SPMUX
-  ))
+  // Lab4-task4
+  // 编写8选1逻辑：根据 Gate*信号，从八个数据中选出一个
 
 
   /********  LD  ********/
-  // lab4-task6
+  // lab4-task5
   // 根据LD条件编写寄存器值更改的逻辑
 
   // SIG.LD_MAR
@@ -239,20 +169,7 @@ class DataPath extends Module {
   // SIG.LD_CC(N Z P)
 
 
-  when(SIG.LD_MAR) { MAR := GATEOUT }
-  when(SIG.LD_MDR) { MDR := Mux(SIG.MIO_EN, IN_MUX, GATEOUT) }
-
-  when(SIG.LD_IR)  { IR  := MDR }
-  when(SIG.LD_BEN) { BEN := IR(11) && N || IR(10) && Z || IR(9) && P }
-  when(SIG.LD_PC || time === 0.U)  { PC := PCMUX }
-
-  when(SIG.LD_CC) {
-    N := dstData(15)
-    Z := !dstData.orR()
-    P := !dstData(15) && dstData.orR()
-  }
-
-  when(LD_KBSR) { KBSR := MDR }
+  when(LD_KBSR) { KBSR := MDR }   
   when(LD_DSR)  { DSR  := MDR }
   when(LD_DDR)  { DDR  := MDR }
 
