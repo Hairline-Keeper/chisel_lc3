@@ -12,7 +12,7 @@ class FeedBack extends Bundle {
   val psr = Output(Bool())         // privilege: supervisor or user
 }
 
-class IOMap extends RawModule {
+class IOMap extends Module {
   val io = IO(new Bundle{
     val mar = Input(UInt(16.W))
     val mio_en = Input(Bool())
