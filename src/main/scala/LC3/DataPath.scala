@@ -12,6 +12,35 @@ class FeedBack extends Bundle {
   val psr = Output(Bool())         // privilege: supervisor or user
 }
 
+class IOMap extends RawModule {
+  val io = IO(new Bundle{
+    val mar = Input(UInt(16.W))
+    val mio_en = Input(Bool())
+    val r_w = Input(Bool())
+
+    val r_kbsr = Output(Bool())
+    val r_kbdr = Output(Bool())
+    val r_dsr  = Output(Bool())
+    val r_mem  = Output(Bool())
+
+    val w_kbsr = Output(Bool())
+    val w_dsr  = Output(Bool())
+    val w_ddr  = Output(Bool())
+  })
+
+  // Need write
+
+  io.r_kbsr := io.mio_en && !io.r_w && io.mar === 0xfe00.U
+  io.r_kbdr := io.mio_en && !io.r_w && io.mar === 0xfe02.U
+  io.r_dsr  := io.mio_en && !io.r_w && io.mar === 0xfe04.U
+  io.r_mem  := io.mio_en && !io.r_w && io.mar  <  0xfe00.U
+
+  io.w_kbsr := io.mio_en && io.r_w && io.mar === 0xfe00.U
+  io.w_dsr  := io.mio_en && io.r_w && io.mar === 0xfe04.U
+  io.w_ddr  := io.mio_en && io.r_w && io.mar === 0xfe06.U
+
+}
+
 class DataPath extends Module {
   val io = IO(new Bundle{
     val signal = Input(new signalEntry)
@@ -32,7 +61,6 @@ class DataPath extends Module {
   val regfile = Module(new Regfile)
   val alu = Module(new ALU)
   val bus = Module(new SimpleBus)
-  
 
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
@@ -154,15 +182,27 @@ class DataPath extends Module {
 
   // address control logic that convered by truth table
 
+  val iomap = Module(new IOMap)
+  iomap.io.mar := MAR
+  iomap.io.mio_en := SIG.MIO_EN
+  iomap.io.r_w := SIG.R_W
+
   //val MEM_EN = SIG.MIO_EN && MAR < 0xfe00.U
   val MEM_RD = SIG.MIO_EN && !SIG.R_W
   val MEM_EN = SIG.MIO_EN && (MAR < 0xfe00.U)
 
-  val IN_MUX = MuxCase(io.mem.rdata, Array(
-    (MEM_RD && (MAR === 0xfe00.U)) -> KBSR,
-    (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
-    (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
-    (MEM_EN && !SIG.R_W) -> io.mem.rdata
+  // val IN_MUX = MuxCase(io.mem.rdata, Array(
+  //   (MEM_RD && (MAR === 0xfe00.U)) -> KBSR,
+  //   (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
+  //   (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
+  //   (MEM_EN && !SIG.R_W) -> io.mem.rdata
+  //   ))
+
+  val IN_MUX = MuxCase(iomap.io.r_mem, Array(
+    (iomap.io.r_kbsr) -> KBSR,
+    (iomap.io.r_kbdr) -> KBDR,
+    (iomap.io.r_dsr) -> DSR,
+    (iomap.io.r_mem) -> io.mem.rdata
     ))
 
   // UART Input
@@ -172,9 +212,13 @@ class DataPath extends Module {
     KBSR := Cat(1.U(1.W), 0.U(15.W))
   }
 
-  val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
-  val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
-  val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
+  // val LD_KBSR = (MAR === 0xfe00.U) && SIG.MIO_EN && SIG.R_W
+  // val LD_DSR  = (MAR === 0xfe04.U) && SIG.MIO_EN && SIG.R_W
+  // val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
+
+  val LD_KBSR = iomap.io.w_kbsr
+  val LD_DSR  = iomap.io.w_dsr
+  val LD_DDR  = iomap.io.w_ddr
 
   // UART Output
   // io.uartTx.valid := DSR(15).asBool
