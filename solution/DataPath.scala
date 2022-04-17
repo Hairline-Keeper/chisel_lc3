@@ -55,7 +55,7 @@ class DataPath extends Module {
 
   val ADDR1MUX  = Wire(UInt(16.W))
   val ADDR2MUX  = Wire(UInt(16.W))
-
+  
   val PCMUX     = Wire(UInt(16.W))
   val DRMUX     = Wire(UInt(16.W))
   val SR1MUX    = Wire(UInt(16.W))
@@ -119,7 +119,7 @@ class DataPath extends Module {
   ))
 
   MARMUX := Mux(SIG.MAR_MUX, addrOut, offset8)
-
+  
   VectorMUX := MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
     0.U -> 0.U,
     1.U -> 0.U,
@@ -160,7 +160,7 @@ class DataPath extends Module {
     (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
     (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
     (MEM_EN && !SIG.R_W) -> io.mem.rdata
-  ))
+    ))
 
   // UART Input
   io.uartRx.ready := !KBSR(15).asBool
@@ -187,7 +187,7 @@ class DataPath extends Module {
 
   val GateSig = Cat(Seq(
     SIG.GATE_PC,
-    SIG.GATE_MDR,
+    SIG.GATE_MDR, 
     SIG.GATE_ALU,
     SIG.GATE_MARMUX,
     SIG.GATE_VECTOR,

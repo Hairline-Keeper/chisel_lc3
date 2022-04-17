@@ -28,18 +28,8 @@ class DataPath extends Module {
   val SIG = io.signal
   val time = GTimer()
 
-  val regfile = Module(new Regfile)
-  val alu = Module(new ALU)
-  // val bus = Module(new SimpleBus)
-  
   val SP = 6.U(3.W)
   val R7 = 7.U(3.W)
-
-  val BEN = RegInit(false.B)
-  val N = RegInit(false.B)
-  val P = RegInit(false.B)
-  val Z = RegInit(true.B)
-
 
   // 初始化
   val PC  = RegInit("h3000".U(16.W)) // TODO: Maybe the PC can be dynamically specified by the image
@@ -50,7 +40,6 @@ class DataPath extends Module {
   }
   val IR  = RegInit(0.U(16.W))
   val MAR = RegInit(0.U(16.W))
-  // val MAR_REG = RegInit(0.U(16.W))
   val MDR = RegInit(0.U(16.W))
   val PSR = RegInit(0.U(16.W))
 
@@ -59,8 +48,27 @@ class DataPath extends Module {
   val DDR  = RegInit(0.U(16.W))
   val DSR  = RegInit(0.U(16.W))
 
-  val GATEOUT = WireInit(0.U(16.W))
+  val BEN = RegInit(false.B)
+  val N = RegInit(false.B)
+  val P = RegInit(false.B)
+  val Z = RegInit(true.B)
 
+  val ADDR1MUX  = Wire(UInt(16.W))
+  val ADDR2MUX  = Wire(UInt(16.W))
+
+  val PCMUX     = Wire(UInt(16.W))
+  val DRMUX     = Wire(UInt(16.W))
+  val SR1MUX    = Wire(UInt(16.W))
+  val SR2MUX    = Wire(UInt(16.W))
+  val SPMUX     = Wire(UInt(16.W))
+  val MARMUX    = Wire(UInt(16.W))
+  val VectorMUX = Wire(UInt(16.W))
+  val PSRMUX    = Wire(UInt(16.W))
+  val addrOut   = Wire(UInt(16.W))
+  val aluOut    = Wire(UInt(16.W))
+  val GATEOUT   = WireInit(0.U(16.W))
+  val r1Data    = WireInit(0.U(16.W))
+  val r2Data    = WireInit(0.U(16.W))
 
   // IR Decode
   val offset5  = SignExt(IR(4,0),  16)  //imm
@@ -70,41 +78,54 @@ class DataPath extends Module {
   val offset8  = ZeroExt(IR(7,0),  16)  // interrupt vector (TRAP)
 
   /********  Mux  ********/
-  // lab4-task3
-  // 请在下方填写数据通的MUX部件
 
-  // ADDR1MUX
+  ADDR1MUX := Mux(SIG.ADDR1_MUX, r1Data, PC)
 
-  // ADDR2MUX
+  ADDR2MUX := MuxLookup(SIG.ADDR2_MUX, 0.U, Seq(
+    0.U -> 0.U,
+    1.U -> offset6,
+    2.U -> offset9,
+    3.U -> offset11
+  ))
 
-  // PCMUX
+  addrOut := ADDR1MUX + ADDR2MUX
 
-  // DRMUX
+  PCMUX := MuxLookup(SIG.PC_MUX, RESET_PC, Seq(
+    0.U -> Mux(PC===0.U, RESET_PC,  PC + 1.U),
+    1.U -> GATEOUT,
+    2.U -> addrOut
+  ))
 
-  // SR1MUX
+  // 实验五-任务一：选择器连接
 
-  // SR2MUX
+  DRMUX :=
 
-  // SPMUX
+  SR1MUX :=
 
-  // MARMUX
+  SR2MUX :=
 
-  // VectorMUX
+  SPMUX :=
 
-  // PSRMUX
-  
+  MARMUX := Mux(SIG.MAR_MUX, addrOut, offset8)
+
+  VectorMUX := MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
+    0.U -> 0.U,
+    1.U -> 0.U,
+    2.U -> 0.U
+  ))
+
+  PSRMUX := 0.U
 
   /*********** ALU Interface ****************/
-  alu.io.ina := regfile.io.r1Data
+  val alu = Module(new ALU)
+  alu.io.ina := r1Data
   alu.io.inb := SR2MUX
   alu.io.op := SIG.ALUK
+  aluOut := alu.io.out
 
   /*********** Regfile Interface ****************/
-  regfile.io.wen    := SIG.LD_REG  //TODO :CHECK
-  regfile.io.wAddr  := DRMUX
-  regfile.io.r1Addr := SR1MUX
-  regfile.io.r2Addr := IR(2, 0)
-  regfile.io.wData  := GATEOUT
+  // 实验五-任务二：寄存器堆例化与端口连接
+  val regfile =
 
   val dstData = WireInit(regfile.io.wData)
 
@@ -121,7 +142,7 @@ class DataPath extends Module {
     (MEM_RD && (MAR === 0xfe02.U)) -> KBDR,
     (MEM_RD && (MAR === 0xfe04.U)) -> DSR,
     (MEM_EN && !SIG.R_W) -> io.mem.rdata
-    ))
+  ))
 
   // UART Input
   io.uartRx.ready := !KBSR(15).asBool
@@ -135,8 +156,6 @@ class DataPath extends Module {
   val LD_DDR  = (MAR === 0xfe06.U) && SIG.MIO_EN && SIG.R_W
 
   // UART Output
-  // io.uartTx.valid := DSR(15).asBool
-
   DSR := Cat(io.uartTx.ready, 0.U(15.W))
   io.uartTx.valid := RegNext(LD_DDR)
   io.uartTx.bits  := DDR(7, 0)
@@ -147,29 +166,27 @@ class DataPath extends Module {
   io.mem.wen    := SIG.MIO_EN && SIG.R_W
   io.mem.mio_en := SIG.MIO_EN
 
-  /*************  Gate *************/
-  // Lab4-task4
-  // 编写8选1逻辑：根据 Gate*信号，从八个数据中选出一个
+
+  // 实验五-任务三：连接总线
+  // GATEOUT :=
 
 
   /********  LD  ********/
-  // lab4-task5
-  // 根据LD条件编写寄存器值更改的逻辑
 
-  // SIG.LD_MAR
+  when(SIG.LD_MAR) { MAR := GATEOUT }
+  when(SIG.LD_MDR) { MDR := Mux(SIG.MIO_EN, IN_MUX, GATEOUT) }
 
-  // SIG.LD_MDR
+  when(SIG.LD_IR)  { IR  := MDR }
+  when(SIG.LD_BEN) { BEN := IR(11) && N || IR(10) && Z || IR(9) && P }
+  when(SIG.LD_PC || time === 0.U)  { PC := PCMUX }
 
-  // SIG.LD_IR
+  when(SIG.LD_CC) {
+    N := dstData(15)
+    Z := !dstData.orR()
+    P := !dstData(15) && dstData.orR()
+  }
 
-  // SIG.LD_BEN
-
-  // SIG.LD_PC 此信号需要 || time === 0.U
-
-  // SIG.LD_CC(N Z P)
-
-
-  when(LD_KBSR) { KBSR := MDR }   
+  when(LD_KBSR) { KBSR := MDR }
   when(LD_DSR)  { DSR  := MDR }
   when(LD_DDR)  { DDR  := MDR }
 

@@ -11,12 +11,10 @@ class ALU extends Module{
     val op  = Input(UInt(2.W))    //ADD,AND,NOT,PASSA
     val out = Output(UInt(16.W))
   })
-  val result = Wire(UInt(17.W))
 
   io.out := DontCare
-  result := DontCare
 
-  // lab4-task1
-  // 在此编写运算器逻辑
+  // 实验三
+  // 在此编写ALU逻辑
 
 }

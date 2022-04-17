@@ -17,7 +17,7 @@ class Regfile extends Module{
   io.r1Data := DontCare
   io.r2Data := DontCare
 
-  // lab4-task1
-  // 在此编写寄存器堆逻辑
+  // 实验四 任务一
+  // 在此编写寄存器堆逻辑（定义寄存器堆、写逻辑、读逻辑）
 
 }
