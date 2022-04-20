@@ -126,7 +126,7 @@ class Controller extends Module {
       // 此处为示例: 当前状态为0, 下一状态根据ben信号转移，若为真，则下一状态为22，否则为18 
       is (0.U) { state := Mux(ben, 22.U, 18.U) }
 
-      // lab3-task1 
+      // 实验五 任务一
       // 请在下方填写 1~59的状态转移, 其中17 19 46 53 55~58 没有对应状态
       is (1.U) { state := 18.U }
       is (2.U) { state := 25.U }

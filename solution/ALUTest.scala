@@ -16,7 +16,7 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
     ina(i) = Random.nextInt(0xffff)
     inb(i) = Random.nextInt(0xffff)
     add_out(i) = ina(i) + inb(i)
-    (i) = ina(i) & inb(i)
+    and_out(i) = ina(i) & inb(i)
     not_out(i) = 0xffff-ina(i)
     pass_out(i) = ina(i)
   }
@@ -25,6 +25,7 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "test add" in {
     test(new ALU) { c =>
       for(i <- 0 until TEST_SIZE) {
+        c.io.op.poke(0.U)
         c.io.ina.poke(ina(i).U)
         c.io.inb.poke(inb(i).U)
         c.io.out.expect(add_out(i).U(15,0))
@@ -39,25 +40,34 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
 
   it should "test and" in {
     test(new ALU) { c =>
-      c.io.ina.poke(ina(i).U)
-      c.io.inb.poke(inb(i).U)
-      c.io.out.expect(and_out(i).U(15,0))
+      for(i <- 0 until TEST_SIZE) {
+        c.io.op.poke(1.U)
+        c.io.ina.poke(ina(i).U)
+        c.io.inb.poke(inb(i).U)
+        c.io.out.expect(and_out(i).U(15, 0))
+      }
     }
   }
 
   it should "test not" in {
     test(new ALU) { c =>
-      c.io.ina.poke(ina(i).U)
-      c.io.inb.poke(inb(i).U)
-      c.io.out.expect(not_out(i).U(15,0))
+      for(i <- 0 until TEST_SIZE) {
+        c.io.op.poke(2.U)
+        c.io.ina.poke(ina(i).U)
+        c.io.inb.poke(inb(i).U)
+        c.io.out.expect(not_out(i).U(15, 0))
+      }
     }
   }
 
   it should "test pass" in {
     test(new ALU) { c =>
-      c.io.ina.poke(ina(i).U)
-      c.io.inb.poke(inb(i).U)
-      c.io.out.expect(pass_out(i).U(15,0))
+      for(i <- 0 until TEST_SIZE) {
+        c.io.op.poke(3.U)
+        c.io.ina.poke(ina(i).U)
+        c.io.inb.poke(inb(i).U)
+        c.io.out.expect(pass_out(i).U(15, 0))
+      }
     }
   }
 }

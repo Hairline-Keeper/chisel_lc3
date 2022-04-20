@@ -25,6 +25,7 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "test add" in {
     test(new ALU) { c =>
       for(i <- 0 until TEST_SIZE) {
+        c.io.op.poke(0.U)
         c.io.ina.poke(ina(i).U)
         c.io.inb.poke(inb(i).U)
         c.io.out.expect(add_out(i).U(15,0))

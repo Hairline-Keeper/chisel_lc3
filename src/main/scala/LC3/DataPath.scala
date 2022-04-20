@@ -64,9 +64,9 @@ class DataPath extends Module {
   val MARMUX    = Wire(UInt(16.W))
   val VectorMUX = Wire(UInt(16.W))
   val PSRMUX    = Wire(UInt(16.W))
-  val GATEOUT   = Wire(UInt(16.W))
   val addrOut   = Wire(UInt(16.W))
   val aluOut    = Wire(UInt(16.W))
+  val GATEOUT   = WireInit(0.U(16.W))
   val r1Data    = WireInit(0.U(16.W))
   val r2Data    = WireInit(0.U(16.W))
 
@@ -111,14 +111,14 @@ class DataPath extends Module {
 
   SR2MUX := Mux(IR(5), offset5, r2Data)
 
+  MARMUX := Mux(SIG.MAR_MUX, addrOut, offset8)
+
   SPMUX := MuxLookup(SIG.SP_MUX, r1Data+1.U, Seq(
     0.U -> (r1Data+1.U),
     1.U -> (r1Data-1.U),
     2.U -> SP, // TODO: Supervisor StackPointer
     3.U -> SP  // TODO: User StackPointer
   ))
-
-  MARMUX := Mux(SIG.MAR_MUX, addrOut, offset8)
 
   VectorMUX := MuxLookup(SIG.VECTOR_MUX, 0.U, Seq(  // TODO: Interrupt
     0.U -> 0.U,
@@ -184,28 +184,38 @@ class DataPath extends Module {
   io.mem.wen    := SIG.MIO_EN && SIG.R_W
   io.mem.mio_en := SIG.MIO_EN
 
+  GATEOUT := PC
+  when(SIG.GATE_PC){ GATEOUT := PC }
+  when(SIG.GATE_MDR){ GATEOUT := MDR }
+  when(SIG.GATE_ALU){ GATEOUT := aluOut }
+  when(SIG.GATE_MARMUX){ GATEOUT := MARMUX}
+  when(SIG.GATE_VECTOR){ GATEOUT := Cat(1.U(8.W), 0.U) }
+  when(SIG.GATE_PC1){ GATEOUT := PC - 1.U }
+  when(SIG.GATE_PSR){ GATEOUT := Cat(Seq(0.U(13.W),PSRMUX)) }
+  when(SIG.GATE_SP){ GATEOUT := SPMUX }
 
-  val GateSig = Cat(Seq(
-    SIG.GATE_PC,
-    SIG.GATE_MDR,
-    SIG.GATE_ALU,
-    SIG.GATE_MARMUX,
-    SIG.GATE_VECTOR,
-    SIG.GATE_PC1,
-    SIG.GATE_PSR,
-    SIG.GATE_SP
-  ).reverse)
 
-  GATEOUT := Mux1H(GateSig, Seq(
-    PC,
-    MDR,
-    aluOut,
-    MARMUX,
-    Cat(1.U(8.W), 0.U),
-    PC - 1.U,
-    Cat(Seq(0.U(13.W),PSRMUX)),
-    SPMUX
-  ))
+//  val GateSig = Cat(Seq(
+//    SIG.GATE_PC,
+//    SIG.GATE_MDR,
+//    SIG.GATE_ALU,
+//    SIG.GATE_MARMUX,
+//    SIG.GATE_VECTOR,
+//    SIG.GATE_PC1,
+//    SIG.GATE_PSR,
+//    SIG.GATE_SP
+//  ).reverse)
+//
+//  GATEOUT := Mux1H(GateSig, Seq(
+//    PC,
+//    MDR,
+//    aluOut,
+//    MARMUX,
+//    Cat(1.U(8.W), 0.U),
+//    PC - 1.U,
+//    Cat(Seq(0.U(13.W),PSRMUX)),
+//    SPMUX
+//  ))
 
 
   /********  LD  ********/

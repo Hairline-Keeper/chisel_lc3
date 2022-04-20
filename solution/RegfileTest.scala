@@ -26,33 +26,32 @@ class RegfileTest extends AnyFlatSpec
   val data1, data2, addr1, addr2 = Array.fill(TEST_SIZE)(0)
 
   for (i <- 0 until TEST_SIZE) {
-    data1(i) = Random.nextInt(0xffff)
+    data1(i) = Random.nextInt(0xffff)    //生成随机值
     data2(i) = Random.nextInt(0xffff)
-    addr1(i) = Random.nextInt(7)
+    addr1(i) = Random.nextInt(7)        //生成随机寄存器号
     addr2(i) = Random.nextInt(7)
   }
 
-  // 硬件部分
   it should "test r/w" in {
     test(new Regfile) { c =>
       println(s"*******regfile read/write test********")
       for(i <- 0 until TEST_SIZE) {
-        c.io.wData.poke(data1(i).U)
+        c.io.wData.poke(data1(i).U)       // 写数据
         c.io.wAddr.poke(addr1(i).U)
         c.io.wen.poke(true.B)
         c.clock.step()
 
-        c.io.r1Addr.poke(addr1(i).U)
+        c.io.r1Addr.poke(addr1(i).U)     // 读数据1
         c.io.wen.poke(false.B)
         c.io.r1Data.expect(data1(i).U(15,0))
         c.clock.step()
 
-        c.io.wData.poke(data2(i).U)
+        c.io.wData.poke(data2(i).U)       // 写数据
         c.io.wAddr.poke(addr2(i).U)
         c.io.wen.poke(true.B)
         c.clock.step()
         
-        c.io.r2Addr.poke(addr2(i).U)
+        c.io.r2Addr.poke(addr2(i).U)      // 读数据2
         c.io.wen.poke(false.B)
         c.io.r2Data.expect(data2(i).U(15,0))
         c.clock.step()

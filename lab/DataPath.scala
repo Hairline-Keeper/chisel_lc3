@@ -168,7 +168,6 @@ class DataPath extends Module {
 
 
   // 实验五-任务三：连接总线
-  // GATEOUT :=
 
 
   /********  LD  ********/
